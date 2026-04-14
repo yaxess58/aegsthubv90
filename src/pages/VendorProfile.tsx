@@ -43,7 +43,7 @@ export default function VendorProfile() {
     if (!vendorId) return;
     const load = async () => {
       // Profile
-      const { data: p } = await supabase
+      const { data: p } = await (supabase as any)
         .from("profiles")
         .select("display_name, avatar_url, banner_url, bio")
         .eq("user_id", vendorId)
@@ -82,7 +82,7 @@ export default function VendorProfile() {
         .order("created_at", { ascending: true });
       
       const vendorOrders = (orders || []).filter((o: any) => o.products?.vendor_id === vendorId);
-      const { data: roleData } = await supabase
+      const { data: roleData } = await (supabase as any)
         .from("user_roles")
         .select("created_at")
         .eq("user_id", vendorId)
