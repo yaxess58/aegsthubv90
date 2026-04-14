@@ -23,7 +23,6 @@ interface ProductRow {
   stock: number;
   image_emoji: string | null;
   image_url: string | null;
-  delivery_data: string | null;
   tracking_number: string | null;
   commission_rate: number | null;
   category: string | null;
@@ -44,7 +43,7 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetch = async () => {
       if (!id) return;
-      const { data } = await supabase.from("products").select("*").eq("id", id).single();
+      const { data } = await supabase.from("products").select("id, name, description, price, type, vendor_id, stock, image_emoji, image_url, tracking_number, commission_rate, category").eq("id", id).single();
       if (data) {
         setProduct(data as ProductRow);
         const rate = data.commission_rate ?? (data.type === "physical" ? 15 : 10);
@@ -255,9 +254,9 @@ export default function ProductDetail() {
                 {product.type === "digital" ? (
                   <div className="bg-secondary rounded-lg p-4 text-left">
                     <div className="flex items-center gap-2 text-xs text-green-500 font-mono mb-2">
-                      <Key className="w-3 h-3" /> Otomatik Dijital Teslimat
+                      <Key className="w-3 h-3" /> Dijital Teslimat
                     </div>
-                    <div className="text-sm font-mono text-primary neon-text break-all">{product.delivery_data || "Veri bekleniyor..."}</div>
+                    <div className="text-sm font-mono text-muted-foreground">Teslimat verisi siparişlerinizden görüntülenecektir.</div>
                   </div>
                 ) : (
                   <div className="space-y-2">
