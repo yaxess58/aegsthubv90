@@ -1,9 +1,15 @@
 import { ReactNode } from "react";
 import AppSidebar from "./AppSidebar";
 import { useBackground } from "@/lib/backgroundContext";
+import { useCustomization } from "@/lib/customizationContext";
 
 export default function PageShell({ children }: { children: ReactNode }) {
   const { backgroundUrl, backgroundOpacity } = useBackground();
+  const { settings } = useCustomization();
+
+  const collapsed = settings.sidebarCollapsed;
+  const isRight = settings.sidebarPosition === "right";
+  const margin = collapsed ? (isRight ? "mr-16" : "ml-16") : (isRight ? "mr-56" : "ml-56");
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -17,7 +23,7 @@ export default function PageShell({ children }: { children: ReactNode }) {
         />
       )}
       <AppSidebar />
-      <main className="ml-56 p-6 relative z-10">{children}</main>
+      <main className={`${margin} p-6 relative z-10 transition-all duration-300`}>{children}</main>
     </div>
   );
 }
