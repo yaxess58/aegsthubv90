@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
-import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus } from "lucide-react";
+import { useBackground } from "@/lib/backgroundContext";
+import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus, Wallpaper, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -20,6 +21,86 @@ interface OrderRow {
   delivery_confirmed: boolean;
   created_at: string;
   products: { name: string; image_url: string | null; image_emoji: string | null } | null;
+}
+
+function BackgroundSettings() {
+  const { backgroundUrl, setBackgroundUrl, backgroundOpacity, setBackgroundOpacity } = useBackground();
+  const bgRef = useRef<HTMLInputElement>(null);
+
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Desteklenen formatlar: JPG, PNG, GIF, WebP");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Maksimum dosya boyutu: 10MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBackgroundUrl(reader.result as string);
+      toast.success("Arka plan güncellendi! 🎨");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg p-5 neon-border space-y-4">
+      <div className="flex items-center gap-2">
+        <Wallpaper className="w-4 h-4 text-primary" />
+        <h2 className="text-sm font-mono font-bold text-foreground">Arka Plan Resmi</h2>
+      </div>
+
+      {backgroundUrl && (
+        <div className="relative rounded-lg overflow-hidden h-24 border border-border">
+          <img src={backgroundUrl} alt="Arka plan" className="w-full h-full object-cover" style={{ opacity: backgroundOpacity }} />
+          <div className="absolute inset-0 bg-background/60" />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => bgRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border text-xs font-mono rounded hover:border-primary/30 transition-all text-foreground"
+        >
+          <ImagePlus className="w-3.5 h-3.5 text-primary" />
+          {backgroundUrl ? "Değiştir" : "Resim Seç"}
+        </button>
+        {backgroundUrl && (
+          <button
+            onClick={() => { setBackgroundUrl(null); toast.success("Arka plan kaldırıldı"); }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border text-xs font-mono rounded hover:border-destructive/30 transition-all text-destructive"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Kaldır
+          </button>
+        )}
+        <input ref={bgRef} type="file" accept="image/*,.gif" className="hidden" onChange={handleBgUpload} />
+      </div>
+
+      {backgroundUrl && (
+        <div className="space-y-1">
+          <label className="text-[10px] font-mono text-muted-foreground">OPAKLLIK: {Math.round(backgroundOpacity * 100)}%</label>
+          <input
+            type="range"
+            min="0.05"
+            max="0.5"
+            step="0.05"
+            value={backgroundOpacity}
+            onChange={(e) => setBackgroundOpacity(parseFloat(e.target.value))}
+            className="w-full accent-primary h-1"
+          />
+        </div>
+      )}
+
+      <p className="text-[10px] font-mono text-muted-foreground">
+        Uygulamanın arka planına resim veya GIF ekleyin. Opaklık ayarıyla görünürlüğü kontrol edin.
+      </p>
+    </motion.div>
+  );
 }
 
 export default function Profile() {
@@ -216,10 +297,13 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Background Image Settings */}
+        <BackgroundSettings />
+
         {/* Supported Formats Info */}
         <div className="glass-card rounded-lg p-3 flex items-center gap-2">
           <span className="text-[10px] font-mono text-muted-foreground">
-            💡 Profil fotoğrafı ve banner için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
+            💡 Profil fotoğrafı, banner ve arka plan için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
           </span>
         </div>
 
