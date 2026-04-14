@@ -79,3 +79,20 @@
     @apply bg-card border border-border backdrop-blur-sm;
   }
 }
+
+/* Customization overrides */
+.no-neon .neon-text {
+  text-shadow: none !important;
+}
+.no-neon .neon-border {
+  box-shadow: none !important;
+}
+.no-neon .neon-glow-btn {
+  box-shadow: none !important;
+}
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
