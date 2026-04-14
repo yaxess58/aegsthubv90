@@ -123,7 +123,7 @@ export default function EncryptedChat({ orderId, otherUserId }: Props) {
   return (
     <div className="glass-card rounded-lg p-4 neon-border">
       <div className="flex items-center gap-2 mb-3 text-xs font-mono text-primary">
-        <Lock className="w-3 h-3" /> AES-256 Şifreli Mesajlaşma
+        <Lock className="w-3 h-3" /> AES-256 Şifreli Mesajlaşma (aktarım sırasında şifrelenir)
       </div>
 
       <div ref={scrollRef} className="space-y-2 max-h-64 overflow-y-auto pr-2 mb-3">
