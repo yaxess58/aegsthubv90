@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
-import { useBackground } from "@/lib/backgroundContext";
-import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus, Wallpaper, Trash2 } from "lucide-react";
+import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
