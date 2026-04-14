@@ -19,9 +19,11 @@ import Orders from "./pages/Orders";
 import SecuritySettings from "./pages/SecuritySettings";
 import Forum from "./pages/Forum";
 import VendorProfile from "./pages/VendorProfile";
+import Customization from "./pages/Customization";
 import { ReactNode } from "react";
 import BackgroundMusic from "./components/BackgroundMusic";
 import { BackgroundProvider } from "./lib/backgroundContext";
+import { CustomizationProvider } from "./lib/customizationContext";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +71,7 @@ function AppRoutes() {
       <Route path="/security" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><SecuritySettings /></ProtectedRoute>} />
       <Route path="/forum" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Forum /></ProtectedRoute>} />
       <Route path="/vendor/:vendorId" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><VendorProfile /></ProtectedRoute>} />
+      <Route path="/customization" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Customization /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -80,10 +83,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <BackgroundProvider>
-            <AppRoutes />
-            <BackgroundMusic />
-          </BackgroundProvider>
+          <CustomizationProvider>
+            <BackgroundProvider>
+              <AppRoutes />
+              <BackgroundMusic />
+            </BackgroundProvider>
+          </CustomizationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
