@@ -77,7 +77,7 @@ export default function NotificationBell() {
 
   const loadNotifications = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("notifications")
       .select("*")
       .eq("user_id", user.id)
@@ -97,13 +97,13 @@ export default function NotificationBell() {
   };
 
   const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    await (supabase as any).from("notifications").update({ read: true }).eq("id", id);
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllRead = async () => {
     if (!user) return;
-    await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
+    await (supabase as any).from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
