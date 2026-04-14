@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
-import { Camera, Save, User, Package, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 interface ProfileData {
   display_name: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   bio: string | null;
 }
 
@@ -23,16 +24,18 @@ interface OrderRow {
 
 export default function Profile() {
   const { user, role } = useAuth();
-  const [profile, setProfile] = useState<ProfileData>({ display_name: "", avatar_url: null, bio: "" });
+  const [profile, setProfile] = useState<ProfileData>({ display_name: "", avatar_url: null, banner_url: null, bio: "" });
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const bannerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: p } = await supabase.from("profiles").select("display_name, avatar_url, bio").eq("user_id", user.id).single();
+      const { data: p } = await (supabase as any).from("profiles").select("display_name, avatar_url, banner_url, bio").eq("user_id", user.id).single();
       if (p) setProfile(p);
 
       if (role === "buyer") {
@@ -51,6 +54,18 @@ export default function Profile() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    
+    // Accept images and GIFs
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Desteklenen formatlar: JPG, PNG, GIF, WebP");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maksimum dosya boyutu: 5MB");
+      return;
+    }
+
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/avatar.${ext}`;
@@ -59,16 +74,44 @@ export default function Profile() {
     if (upErr) { toast.error("Yükleme hatası"); setUploading(false); return; }
 
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", user.id);
+    await (supabase as any).from("profiles").update({ avatar_url: publicUrl }).eq("user_id", user.id);
     setProfile((p) => ({ ...p, avatar_url: publicUrl }));
-    toast.success("Avatar güncellendi!");
+    toast.success("Avatar güncellendi! 🎉");
     setUploading(false);
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Desteklenen formatlar: JPG, PNG, GIF, WebP");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Maksimum dosya boyutu: 10MB");
+      return;
+    }
+
+    setUploadingBanner(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/banner.${ext}`;
+    
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (upErr) { toast.error("Banner yükleme hatası"); setUploadingBanner(false); return; }
+
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    await (supabase as any).from("profiles").update({ banner_url: publicUrl }).eq("user_id", user.id);
+    setProfile((p) => ({ ...p, banner_url: publicUrl }));
+    toast.success("Banner güncellendi! 🖼️");
+    setUploadingBanner(false);
   };
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
+    const { error } = await (supabase as any).from("profiles").update({
       display_name: profile.display_name,
       bio: profile.bio,
     }).eq("user_id", user.id);
@@ -92,24 +135,54 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-xl font-mono font-bold text-primary neon-text">Profilim</h1>
 
+        {/* Banner */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative rounded-lg overflow-hidden h-36 bg-secondary group">
+          {profile.banner_url ? (
+            <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-primary/20 via-card to-primary/10" />
+          )}
+          <button
+            onClick={() => bannerRef.current?.click()}
+            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+          >
+            {uploadingBanner ? (
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            ) : (
+              <>
+                <ImagePlus className="w-5 h-5 text-primary" />
+                <span className="text-xs font-mono text-foreground">Banner Değiştir (GIF destekli)</span>
+              </>
+            )}
+          </button>
+          <input ref={bannerRef} type="file" accept="image/*,.gif" className="hidden" onChange={handleBannerUpload} />
+        </motion.div>
+
         {/* Avatar & Info */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg p-6 neon-border">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg p-6 neon-border -mt-10 relative z-10">
           <div className="flex items-start gap-6">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-full bg-secondary border-2 border-border overflow-hidden flex items-center justify-center">
+            <div className="relative group -mt-12">
+              <div className="w-24 h-24 rounded-full bg-secondary border-4 border-card overflow-hidden flex items-center justify-center ring-2 ring-primary/30">
                 {profile.avatar_url ? (
                   <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-8 h-8 text-muted-foreground" />
+                  <User className="w-10 h-10 text-muted-foreground" />
                 )}
               </div>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center"
               >
-                {uploading ? <Loader2 className="w-5 h-5 text-primary animate-spin" /> : <Camera className="w-5 h-5 text-primary" />}
+                {uploading ? (
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5 text-primary" />
+                    <span className="text-[8px] font-mono text-foreground mt-0.5">GIF ✓</span>
+                  </>
+                )}
               </button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              <input ref={fileRef} type="file" accept="image/*,.gif" className="hidden" onChange={handleAvatarUpload} />
             </div>
 
             <div className="flex-1 space-y-3">
@@ -143,6 +216,13 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Supported Formats Info */}
+        <div className="glass-card rounded-lg p-3 flex items-center gap-2">
+          <span className="text-[10px] font-mono text-muted-foreground">
+            💡 Profil fotoğrafı ve banner için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
+          </span>
+        </div>
+
         {/* Order History for Buyers */}
         {role === "buyer" && (
           <div>
@@ -173,7 +253,7 @@ export default function Profile() {
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-mono font-bold text-primary">{o.amount} LTC</span>
                       {o.status === "processing" && !o.delivery_confirmed ? (
-                        <button onClick={() => confirmDelivery(o.id)} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-[10px] font-mono rounded hover:bg-green-700 transition-colors">
+                        <button onClick={() => confirmDelivery(o.id)} className="flex items-center gap-1 px-2 py-1 bg-green-600 text-primary-foreground text-[10px] font-mono rounded hover:bg-green-700 transition-colors">
                           <CheckCircle className="w-3 h-3" /> Teslimatı Onayla
                         </button>
                       ) : o.delivery_confirmed ? (

@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/authContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Shield, LayoutDashboard, ShoppingCart, Store, Wallet, FileWarning, ScrollText, LogOut, ArrowRightLeft, User, Package, Lock, Coins, MessageSquare } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 const adminLinks = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -42,7 +43,10 @@ export default function AppSidebar() {
       <div className="p-4 border-b border-border flex items-center gap-2">
         <Shield className="w-5 h-5 text-primary" />
         <span className="font-mono text-sm font-bold text-primary neon-text">aeigsthub</span>
-        <span className="text-[8px] font-mono text-muted-foreground ml-auto">v3.0</span>
+        <div className="ml-auto flex items-center gap-2">
+          <NotificationBell />
+          <span className="text-[8px] font-mono text-muted-foreground">v3.0</span>
+        </div>
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
