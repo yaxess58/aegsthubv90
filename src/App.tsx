@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import SecuritySettings from "./pages/SecuritySettings";
 import Forum from "./pages/Forum";
+import VendorProfile from "./pages/VendorProfile";
 import { ReactNode } from "react";
 import BackgroundMusic from "./components/BackgroundMusic";
 
@@ -66,6 +67,7 @@ function AppRoutes() {
       <Route path="/orders" element={<ProtectedRoute allowedRoles={["buyer", "admin"]}><Orders /></ProtectedRoute>} />
       <Route path="/security" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><SecuritySettings /></ProtectedRoute>} />
       <Route path="/forum" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Forum /></ProtectedRoute>} />
+      <Route path="/vendor/:vendorId" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><VendorProfile /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
