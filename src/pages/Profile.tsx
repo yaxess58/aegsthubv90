@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
-import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus } from "lucide-react";
+import { useBackground } from "@/lib/backgroundContext";
+import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus, Wallpaper, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -216,10 +217,13 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Background Image Settings */}
+        <BackgroundSettings />
+
         {/* Supported Formats Info */}
         <div className="glass-card rounded-lg p-3 flex items-center gap-2">
           <span className="text-[10px] font-mono text-muted-foreground">
-            💡 Profil fotoğrafı ve banner için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
+            💡 Profil fotoğrafı, banner ve arka plan için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
           </span>
         </div>
 
