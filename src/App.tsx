@@ -21,6 +21,7 @@ import Forum from "./pages/Forum";
 import VendorProfile from "./pages/VendorProfile";
 import { ReactNode } from "react";
 import BackgroundMusic from "./components/BackgroundMusic";
+import { BackgroundProvider } from "./lib/backgroundContext";
 
 const queryClient = new QueryClient();
 
@@ -79,8 +80,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
-          <BackgroundMusic />
+          <BackgroundProvider>
+            <AppRoutes />
+            <BackgroundMusic />
+          </BackgroundProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
