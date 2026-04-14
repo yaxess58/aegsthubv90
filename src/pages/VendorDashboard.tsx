@@ -41,6 +41,25 @@ export default function VendorDashboard() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Desteklenen formatlar: JPG, PNG, GIF, WebP");
+      return;
+    }
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maksimum dosya boyutu: 5MB");
+      return;
+    }
+    // Sanitize extension
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+      toast.error("Geçersiz dosya uzantısı");
+      return;
+    }
+
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -52,7 +71,13 @@ export default function VendorDashboard() {
     let imageUrl: string | null = null;
 
     if (imageFile) {
-      const ext = imageFile.name.split(".").pop();
+      const allowedExts = ["jpg", "jpeg", "png", "gif", "webp"];
+      const ext = imageFile.name.split(".").pop()?.toLowerCase();
+      if (!ext || !allowedExts.includes(ext)) {
+        toast.error("Geçersiz dosya uzantısı");
+        setSaving(false);
+        return;
+      }
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("product-images").upload(path, imageFile);
       if (upErr) { toast.error("Resim yüklenemedi"); setSaving(false); return; }

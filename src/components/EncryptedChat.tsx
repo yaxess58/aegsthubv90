@@ -15,17 +15,24 @@ interface MessageRow {
   decrypted?: string;
 }
 
-// Client-side AES-256-GCM encryption using Web Crypto API
-const ENCRYPTION_KEY_SEED = "aeigsthub-e2e-key-v1";
-
-async function getKey(): Promise<CryptoKey> {
+// Per-conversation key derivation using PBKDF2 from order ID + user IDs
+async function deriveKey(orderId: string, userId1: string, userId2: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(ENCRYPTION_KEY_SEED.padEnd(32, "0").slice(0, 32)), "AES-GCM", false, ["encrypt", "decrypt"]);
-  return keyMaterial;
+  // Sort user IDs to ensure both parties derive the same key
+  const sortedIds = [userId1, userId2].sort().join(":");
+  const seed = `${orderId}:${sortedIds}`;
+  const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(seed), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: enc.encode("aeigsthub-e2e-v2"), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
 }
 
-async function encryptMessage(text: string): Promise<{ encrypted: string; iv: string }> {
-  const key = await getKey();
+async function encryptMessage(text: string, orderId: string, userId1: string, userId2: string): Promise<{ encrypted: string; iv: string }> {
+  const key = await deriveKey(orderId, userId1, userId2);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
   const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(text));
@@ -35,9 +42,9 @@ async function encryptMessage(text: string): Promise<{ encrypted: string; iv: st
   };
 }
 
-async function decryptMessage(encrypted: string, iv: string): Promise<string> {
+async function decryptMessage(encrypted: string, iv: string, orderId: string, userId1: string, userId2: string): Promise<string> {
   try {
-    const key = await getKey();
+    const key = await deriveKey(orderId, userId1, userId2);
     const encBytes = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
     const ivBytes = Uint8Array.from(atob(iv), (c) => c.charCodeAt(0));
     const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, encBytes);
@@ -71,7 +78,7 @@ export default function EncryptedChat({ orderId, otherUserId }: Props) {
         const decrypted = await Promise.all(
           data.map(async (m: any) => ({
             ...m,
-            decrypted: await decryptMessage(m.encrypted_text, m.iv),
+            decrypted: await decryptMessage(m.encrypted_text, m.iv, orderId, user?.id || "", otherUserId),
           }))
         );
         setMessages(decrypted);
@@ -85,7 +92,7 @@ export default function EncryptedChat({ orderId, otherUserId }: Props) {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "encrypted_messages", filter: `order_id=eq.${orderId}` },
         async (payload) => {
           const m = payload.new as any;
-          const decrypted = await decryptMessage(m.encrypted_text, m.iv);
+          const decrypted = await decryptMessage(m.encrypted_text, m.iv, orderId, user?.id || "", otherUserId);
           setMessages((prev) => [...prev, { ...m, decrypted }]);
         }
       )
@@ -101,7 +108,7 @@ export default function EncryptedChat({ orderId, otherUserId }: Props) {
   const sendMessage = async () => {
     if (!newMsg.trim() || !user || sending) return;
     setSending(true);
-    const { encrypted, iv } = await encryptMessage(newMsg.trim());
+    const { encrypted, iv } = await encryptMessage(newMsg.trim(), orderId, user.id, otherUserId);
     await supabase.from("encrypted_messages").insert({
       order_id: orderId,
       sender_id: user.id,
