@@ -53,6 +53,7 @@ const translations = {
     profile: "Profil",
     market: "Market",
     myOrders: "Siparişlerim",
+    store: "Mağaza",
     
     // Customization
     customization: "Özelleştirme",
@@ -151,6 +152,7 @@ const translations = {
     profile: "Profile",
     market: "Market",
     myOrders: "My Orders",
+    store: "Store",
     
     customization: "Customization",
     themeColor: "Theme Color",
@@ -245,6 +247,7 @@ const translations = {
     profile: "Профиль",
     market: "Маркет",
     myOrders: "Мои заказы",
+    store: "Магазин",
     
     customization: "Настройка",
     themeColor: "Цвет темы",
