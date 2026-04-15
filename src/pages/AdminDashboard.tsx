@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   }, []);
 
   const releaseEscrow = async (escrowId: string) => {
-    const { data } = await supabase.rpc("release_escrow", { _escrow_id: escrowId });
+    const { data } = await supabase.rpc("release_escrow" as any, { _escrow_id: escrowId });
     if (data && (data as any).success) {
       toast.success("Escrow serbest bırakıldı!");
       setEscrows((prev) => prev.filter((e) => e.id !== escrowId));
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
   };
 
   const executePanic = async () => {
-    const { data } = await supabase.rpc("panic_destroy");
+    const { data } = await supabase.rpc("panic_destroy" as any);
     if (data && (data as any).success) {
       toast.success("🔥 Tüm hassas veriler imha edildi!");
       setPanicConfirm(false);
@@ -92,13 +92,13 @@ export default function AdminDashboard() {
   const saveAutoWithdraw = async () => {
     if (!user || !coldWallet) return;
     if (autoWithdraw) {
-      await supabase.from("admin_auto_withdraw").update({
+      await (supabase.from("admin_auto_withdraw") as any).update({
         cold_wallet: coldWallet,
         min_amount: parseFloat(minAmount),
         enabled: true,
       }).eq("id", autoWithdraw.id);
     } else {
-      await supabase.from("admin_auto_withdraw").insert({
+      await (supabase.from("admin_auto_withdraw") as any).insert({
         admin_id: user.id,
         cold_wallet: coldWallet,
         min_amount: parseFloat(minAmount),
