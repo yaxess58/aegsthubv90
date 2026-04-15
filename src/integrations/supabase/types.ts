@@ -41,6 +41,27 @@ export type Database = {
         }
         Relationships: []
       }
+      anti_phishing_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dead_drop_locations: {
         Row: {
           created_at: string
@@ -368,42 +389,84 @@ export type Database = {
       products: {
         Row: {
           category: string | null
+          commission_rate: number | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          name: string | null
           price: number
           stock: number | null
           title: string
+          type: string | null
           updated_at: string
           vendor_id: string
         }
         Insert: {
           category?: string | null
+          commission_rate?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          name?: string | null
           price?: number
           stock?: number | null
           title: string
+          type?: string | null
           updated_at?: string
           vendor_id: string
         }
         Update: {
           category?: string | null
+          commission_rate?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          name?: string | null
           price?: number
           stock?: number | null
           title?: string
+          type?: string | null
           updated_at?: string
           vendor_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          pgp_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          pgp_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          pgp_key?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -465,6 +528,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "shipping_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          status: string | null
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
@@ -555,13 +659,42 @@ export type Database = {
           },
         ]
       }
+      vendor_wallets: {
+        Row: {
+          balance: number | null
+          btc_address: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          balance?: number | null
+          btc_address?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          balance?: number | null
+          btc_address?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       assign_role_on_signup: { Args: { _role: string }; Returns: undefined }
+      confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
       create_admin_user: { Args: never; Returns: undefined }
+      generate_payment_address: { Args: { _order_id: string }; Returns: string }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       get_vendor_rating: {
         Args: { _vendor_id: string }
@@ -578,6 +711,10 @@ export type Database = {
         Returns: boolean
       }
       panic_destroy: { Args: never; Returns: undefined }
+      process_order_payment: {
+        Args: { _order_id: string; _tx_hash: string }
+        Returns: undefined
+      }
       release_escrow: { Args: { _order_id: string }; Returns: undefined }
     }
     Enums: {
