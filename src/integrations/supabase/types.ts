@@ -727,6 +727,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_admin_role_by_email: {
+        Args: { _email: string }
+        Returns: undefined
+      }
       assign_role_on_signup: { Args: { _role: string }; Returns: undefined }
       confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
       create_admin_user: { Args: never; Returns: undefined }
