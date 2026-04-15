@@ -20,7 +20,9 @@ export type Database = {
           cold_wallet: string | null
           created_at: string
           enabled: boolean | null
+          frequency: string | null
           id: string
+          min_amount: number | null
           threshold: number | null
         }
         Insert: {
@@ -28,7 +30,9 @@ export type Database = {
           cold_wallet?: string | null
           created_at?: string
           enabled?: boolean | null
+          frequency?: string | null
           id?: string
+          min_amount?: number | null
           threshold?: number | null
         }
         Update: {
@@ -36,7 +40,9 @@ export type Database = {
           cold_wallet?: string | null
           created_at?: string
           enabled?: boolean | null
+          frequency?: string | null
           id?: string
+          min_amount?: number | null
           threshold?: number | null
         }
         Relationships: []
@@ -104,23 +110,29 @@ export type Database = {
         Row: {
           created_at: string
           dispute_id: string
+          from_user_id: string | null
           id: string
           message: string
           sender_id: string
+          text: string | null
         }
         Insert: {
           created_at?: string
           dispute_id: string
+          from_user_id?: string | null
           id?: string
           message: string
           sender_id: string
+          text?: string | null
         }
         Update: {
           created_at?: string
           dispute_id?: string
+          from_user_id?: string | null
           id?: string
           message?: string
           sender_id?: string
+          text?: string | null
         }
         Relationships: [
           {
@@ -345,6 +357,7 @@ export type Database = {
           id: string
           notes: string | null
           product_id: string | null
+          product_name: string | null
           shipping_address: string | null
           status: string | null
           updated_at: string
@@ -358,6 +371,7 @@ export type Database = {
           id?: string
           notes?: string | null
           product_id?: string | null
+          product_name?: string | null
           shipping_address?: string | null
           status?: string | null
           updated_at?: string
@@ -371,6 +385,7 @@ export type Database = {
           id?: string
           notes?: string | null
           product_id?: string | null
+          product_name?: string | null
           shipping_address?: string | null
           status?: string | null
           updated_at?: string
@@ -391,14 +406,17 @@ export type Database = {
           category: string | null
           commission_rate: number | null
           created_at: string
+          delivery_data: string | null
           description: string | null
           id: string
+          image_emoji: string | null
           image_url: string | null
           is_active: boolean | null
           name: string | null
           price: number
           stock: number | null
           title: string
+          tracking_number: string | null
           type: string | null
           updated_at: string
           vendor_id: string
@@ -407,14 +425,17 @@ export type Database = {
           category?: string | null
           commission_rate?: number | null
           created_at?: string
+          delivery_data?: string | null
           description?: string | null
           id?: string
+          image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
           name?: string | null
           price?: number
           stock?: number | null
           title: string
+          tracking_number?: string | null
           type?: string | null
           updated_at?: string
           vendor_id: string
@@ -423,14 +444,17 @@ export type Database = {
           category?: string | null
           commission_rate?: number | null
           created_at?: string
+          delivery_data?: string | null
           description?: string | null
           id?: string
+          image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
           name?: string | null
           price?: number
           stock?: number | null
           title?: string
+          tracking_number?: string | null
           type?: string | null
           updated_at?: string
           vendor_id?: string
@@ -661,26 +685,38 @@ export type Database = {
       }
       vendor_wallets: {
         Row: {
+          available: number | null
           balance: number | null
           btc_address: string | null
+          commission: number | null
           created_at: string
           id: string
+          pending: number | null
+          total: number | null
           updated_at: string
           vendor_id: string
         }
         Insert: {
+          available?: number | null
           balance?: number | null
           btc_address?: string | null
+          commission?: number | null
           created_at?: string
           id?: string
+          pending?: number | null
+          total?: number | null
           updated_at?: string
           vendor_id: string
         }
         Update: {
+          available?: number | null
           balance?: number | null
           btc_address?: string | null
+          commission?: number | null
           created_at?: string
           id?: string
+          pending?: number | null
+          total?: number | null
           updated_at?: string
           vendor_id?: string
         }
@@ -710,12 +746,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      panic_destroy: { Args: never; Returns: undefined }
+      panic_destroy: { Args: never; Returns: Json }
       process_order_payment: {
-        Args: { _order_id: string; _tx_hash: string }
+        Args: { _ltc_address?: string; _order_id: string; _tx_hash?: string }
         Returns: undefined
       }
-      release_escrow: { Args: { _order_id: string }; Returns: undefined }
+      release_escrow: {
+        Args: { _escrow_id?: string; _order_id?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "vendor" | "buyer"
