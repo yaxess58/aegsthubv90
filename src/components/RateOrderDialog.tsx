@@ -27,8 +27,8 @@ export default function RateOrderDialog({ orderId, vendorId, productName, onClos
       vendor_id: vendorId,
       order_id: orderId,
       rating,
-      comment: comment.trim() || null,
-    });
+      review: comment.trim() || null,
+    } as any);
     setSubmitting(false);
     if (error) {
       if (error.code === "23505") toast.error("Bu siparişi zaten puanladınız.");

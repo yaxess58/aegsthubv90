@@ -65,9 +65,9 @@ export default function Disputes() {
     if (!newMsg.trim() || !selected || !user) return;
     await supabase.from("dispute_messages").insert({
       dispute_id: selected.id,
-      from_user_id: user.id,
-      text: newMsg.trim(),
-    });
+      sender_id: user.id,
+      message: newMsg.trim(),
+    } as any);
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), from_user_id: user.id, text: newMsg.trim(), created_at: new Date().toISOString() }]);
     setNewMsg("");
   };

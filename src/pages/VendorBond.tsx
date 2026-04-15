@@ -33,10 +33,8 @@ export default function VendorBond() {
     const { data, error } = await supabase.from("vendor_bonds").insert({
       vendor_id: user.id,
       amount: 0,
-      required_amount: 0.5,
       status: "pending",
-      deposit_address: depositAddress,
-    }).select().single();
+    } as any).select().single();
     if (error) { toast.error(error.message); return; }
     setBond(data);
     toast.success("Depozito talebi oluşturuldu!");

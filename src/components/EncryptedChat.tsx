@@ -112,10 +112,9 @@ export default function EncryptedChat({ orderId, otherUserId }: Props) {
     await supabase.from("encrypted_messages").insert({
       order_id: orderId,
       sender_id: user.id,
-      receiver_id: otherUserId,
-      encrypted_text: encrypted,
+      ciphertext: encrypted,
       iv,
-    });
+    } as any);
     setNewMsg("");
     setSending(false);
   };
