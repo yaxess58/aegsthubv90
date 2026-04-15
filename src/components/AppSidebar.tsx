@@ -1,43 +1,47 @@
 import { useAuth } from "@/lib/authContext";
 import { useCustomization } from "@/lib/customizationContext";
+import { useI18n } from "@/lib/i18n";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Shield, LayoutDashboard, ShoppingCart, Store, Wallet, FileWarning, ScrollText, LogOut, ArrowRightLeft, User, Package, Lock, Coins, MessageSquare, Palette } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 
-const adminLinks = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/admin/security-logs", label: "Security Logs", icon: ScrollText },
-  { to: "/admin/disputes", label: "Disputes", icon: FileWarning },
-  { to: "/transactions", label: "İşlemler", icon: ArrowRightLeft },
-  { to: "/forum", label: "Forum", icon: MessageSquare },
-  { to: "/security", label: "Güvenlik", icon: Lock },
-  { to: "/customization", label: "Özelleştir", icon: Palette },
+type LinkDef = { to: string; labelKey: string; icon: any };
+
+const adminLinks: LinkDef[] = [
+  { to: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
+  { to: "/admin/security-logs", labelKey: "securityLogs", icon: ScrollText },
+  { to: "/admin/disputes", labelKey: "disputes", icon: FileWarning },
+  { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
+  { to: "/forum", labelKey: "forum", icon: MessageSquare },
+  { to: "/security", labelKey: "security", icon: Lock },
+  { to: "/customization", labelKey: "customize", icon: Palette },
 ];
 
-const vendorLinks = [
-  { to: "/vendor", label: "Ürünlerim", icon: Store },
-  { to: "/vendor/wallet", label: "Cüzdan", icon: Wallet },
-  { to: "/vendor/bond", label: "Depozito", icon: Coins },
-  { to: "/transactions", label: "İşlemler", icon: ArrowRightLeft },
-  { to: "/forum", label: "Forum", icon: MessageSquare },
-  { to: "/security", label: "Güvenlik", icon: Lock },
-  { to: "/profile", label: "Profil", icon: User },
-  { to: "/customization", label: "Özelleştir", icon: Palette },
+const vendorLinks: LinkDef[] = [
+  { to: "/vendor", labelKey: "myProducts", icon: Store },
+  { to: "/vendor/wallet", labelKey: "wallet", icon: Wallet },
+  { to: "/vendor/bond", labelKey: "deposit", icon: Coins },
+  { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
+  { to: "/forum", labelKey: "forum", icon: MessageSquare },
+  { to: "/security", labelKey: "security", icon: Lock },
+  { to: "/profile", labelKey: "profile", icon: User },
+  { to: "/customization", labelKey: "customize", icon: Palette },
 ];
 
-const buyerLinks = [
-  { to: "/market", label: "Market", icon: ShoppingCart },
-  { to: "/orders", label: "Siparişlerim", icon: Package },
-  { to: "/transactions", label: "İşlemler", icon: ArrowRightLeft },
-  { to: "/forum", label: "Forum", icon: MessageSquare },
-  { to: "/security", label: "Güvenlik", icon: Lock },
-  { to: "/profile", label: "Profil", icon: User },
-  { to: "/customization", label: "Özelleştir", icon: Palette },
+const buyerLinks: LinkDef[] = [
+  { to: "/market", labelKey: "market", icon: ShoppingCart },
+  { to: "/orders", labelKey: "myOrders", icon: Package },
+  { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
+  { to: "/forum", labelKey: "forum", icon: MessageSquare },
+  { to: "/security", labelKey: "security", icon: Lock },
+  { to: "/profile", labelKey: "profile", icon: User },
+  { to: "/customization", labelKey: "customize", icon: Palette },
 ];
 
 export default function AppSidebar() {
   const { role, user, logout } = useAuth();
   const { settings } = useCustomization();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,17 +65,18 @@ export default function AppSidebar() {
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const active = location.pathname === link.to;
+          const label = t(link.labelKey as any);
           return (
             <button
               key={link.to}
               onClick={() => navigate(link.to)}
-              title={collapsed ? link.label : undefined}
+              title={collapsed ? label : undefined}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm transition-all ${
                 active ? "bg-primary/10 text-primary neon-border" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               } ${collapsed ? "justify-center" : ""}`}
             >
               <link.icon className="w-4 h-4 shrink-0" />
-              {!collapsed && link.label}
+              {!collapsed && label}
             </button>
           );
         })}
@@ -91,11 +96,11 @@ export default function AppSidebar() {
         )}
         <button
           onClick={async () => { await logout(); navigate("/"); }}
-          title={collapsed ? "Çıkış" : undefined}
+          title={collapsed ? t("logout") : undefined}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-destructive hover:bg-destructive/10 transition-all ${collapsed ? "justify-center" : ""}`}
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && "Çıkış"}
+          {!collapsed && t("logout")}
         </button>
       </div>
     </aside>
