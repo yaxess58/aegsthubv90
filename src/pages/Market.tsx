@@ -6,6 +6,8 @@ import { Key, Package, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import VendorRating from "@/components/VendorRating";
 
+const SERVICE_FEE_RATE = 0.05;
+
 interface ProductRow {
   id: string;
   name: string;
@@ -16,7 +18,6 @@ interface ProductRow {
   image_url: string | null;
   stock: number;
   vendor_id: string;
-  profiles?: { display_name: string | null } | null;
 }
 
 export default function Market() {
@@ -50,7 +51,6 @@ export default function Market() {
         <span className="text-xs font-mono text-muted-foreground">{filtered.length} ürün</span>
       </div>
 
-      {/* Search & Filter Bar */}
       <div className="flex gap-3 mb-6">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -84,42 +84,47 @@ export default function Market() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((p, i) => (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04 }}
-            onClick={() => navigate(`/product/${p.id}`)}
-            className="glass-card rounded-lg overflow-hidden cursor-pointer hover:neon-border transition-all group"
-          >
-            {/* Product Image */}
-            <div className="aspect-[4/3] bg-secondary flex items-center justify-center overflow-hidden">
-              {p.image_url ? (
-                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              ) : (
-                <span className="text-5xl opacity-60">{p.image_emoji || "📦"}</span>
-              )}
-            </div>
-            <div className="p-4">
-              <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">{p.name}</div>
-              <div className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">{p.description}</div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                <span className="text-sm font-mono font-bold text-primary">{p.price} LTC</span>
-                <span className={`flex items-center gap-1 text-[10px] font-mono ${
-                  p.type === "digital" ? "text-blue-400" : "text-orange-400"
-                }`}>
-                  {p.type === "digital" ? <Key className="w-3 h-3" /> : <Package className="w-3 h-3" />}
-                  {p.type === "digital" ? "DİJİTAL" : "FİZİKSEL"}
-                </span>
+        {filtered.map((p, i) => {
+          const totalPrice = p.price + p.price * SERVICE_FEE_RATE;
+          return (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              onClick={() => navigate(`/product/${p.id}`)}
+              className="glass-card rounded-lg overflow-hidden cursor-pointer hover:neon-border transition-all group"
+            >
+              <div className="aspect-[4/3] bg-secondary flex items-center justify-center overflow-hidden">
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                ) : (
+                  <span className="text-5xl opacity-60">{p.image_emoji || "📦"}</span>
+                )}
               </div>
-              <div className="text-[10px] text-muted-foreground font-mono mt-2 flex items-center justify-between">
-                <span>Stok: {p.stock}</span>
-                <VendorRating vendorId={p.vendor_id} />
+              <div className="p-4">
+                <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">{p.name}</div>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">{p.description}</div>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                  <div>
+                    <span className="text-sm font-mono font-bold text-primary">{totalPrice.toFixed(4)} LTC</span>
+                    <span className="text-[9px] font-mono text-yellow-500 ml-1">+%5</span>
+                  </div>
+                  <span className={`flex items-center gap-1 text-[10px] font-mono ${
+                    p.type === "digital" ? "text-blue-400" : "text-orange-400"
+                  }`}>
+                    {p.type === "digital" ? <Key className="w-3 h-3" /> : <Package className="w-3 h-3" />}
+                    {p.type === "digital" ? "DİJİTAL" : "FİZİKSEL"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-muted-foreground font-mono mt-2 flex items-center justify-between">
+                  <span>Stok: {p.stock}</span>
+                  <VendorRating vendorId={p.vendor_id} />
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
     </PageShell>
   );
