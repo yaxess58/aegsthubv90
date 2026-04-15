@@ -4,13 +4,16 @@ import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
 import { QRCodeSVG } from "qrcode.react";
-import { ShoppingCart, Clock, Loader2, CheckCircle, Key, Package, Truck, User, Lock, Timer, AlertTriangle, Shield } from "lucide-react";
+import { ShoppingCart, Clock, Loader2, CheckCircle, Key, Package, Truck, User, Lock, Timer, AlertTriangle, Shield, Hash, Send } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import VendorRating from "@/components/VendorRating";
 import DeliveryMethodSelector from "@/components/DeliveryMethodSelector";
 
-type PaymentStatus = "idle" | "pending" | "processing" | "paid";
+const SERVICE_FEE_RATE = 0.05; // %5
+const CENTRAL_POOL_ADDRESS = "bc1qpyugsrx9xjvjpcdjkqjwhdm645l0039skthesp";
+
+type PaymentStatus = "idle" | "pending" | "txid_input" | "processing" | "paid";
 type DeliveryMethod = "cargo" | "dead_drop" | "mailbox";
 
 interface ProductRow {
@@ -34,11 +37,16 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<ProductRow | null>(null);
   const [vendorName, setVendorName] = useState<string>("");
   const [status, setStatus] = useState<PaymentStatus>("idle");
-  const [paymentData, setPaymentData] = useState<{ address: string; expires_at: string; qr_data: string } | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [orderId, setOrderId] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(1800); // 30 min
   const [loading, setLoading] = useState(true);
-  const [commissionRate, setCommissionRate] = useState<number>(10);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("cargo");
+  const [txid, setTxid] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [timerStart, setTimerStart] = useState<number | null>(null);
+
+  const serviceFee = product ? product.price * SERVICE_FEE_RATE : 0;
+  const totalPrice = product ? product.price + serviceFee : 0;
 
   useEffect(() => {
     const fetch = async () => {
@@ -46,8 +54,6 @@ export default function ProductDetail() {
       const { data } = await supabase.from("products").select("id, name, description, price, type, vendor_id, stock, image_emoji, image_url, tracking_number, commission_rate, category").eq("id", id).single();
       if (data) {
         setProduct(data as ProductRow);
-        const rate = data.commission_rate ?? (data.type === "physical" ? 15 : 10);
-        setCommissionRate(rate);
         const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", data.vendor_id).single();
         if (profile) setVendorName(profile.display_name || "Anonim Satıcı");
       }
@@ -56,24 +62,25 @@ export default function ProductDetail() {
     fetch();
   }, [id]);
 
+  // Timer countdown
   useEffect(() => {
-    if (!paymentData) return;
+    if (!timerStart) return;
     const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((new Date(paymentData.expires_at).getTime() - Date.now()) / 1000));
+      const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+      const remaining = Math.max(0, 1800 - elapsed);
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(interval);
-        if (status === "pending") {
+        if (status === "pending" || status === "txid_input") {
           toast.error("Ödeme süresi doldu!");
           setStatus("idle");
-          setPaymentData(null);
         }
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [paymentData, status]);
+  }, [timerStart, status]);
 
-  // Prevent browser history leak during payment
+  // Prevent browser history leak
   useEffect(() => {
     if (status !== "idle") {
       window.history.replaceState(null, "", "/market");
@@ -89,38 +96,44 @@ export default function ProductDetail() {
       buyer_id: user.id,
       vendor_id: product.vendor_id,
       status: "pending",
-      amount: product.price,
+      amount: totalPrice,
+      service_fee: serviceFee,
       delivery_method: product.type === "digital" ? "cargo" : deliveryMethod,
     } as any).select().single();
 
     if (orderErr) { toast.error("Sipariş oluşturulamadı"); setStatus("idle"); return; }
 
-    const { data: addrData } = await supabase.rpc("generate_payment_address", {
-      _order_id: order.id,
-      _amount: product.price,
+    setOrderId(order.id);
+    setTimerStart(Date.now());
+
+    // After showing address for 3 seconds, allow TXID input
+    setTimeout(() => setStatus("txid_input"), 3000);
+  };
+
+  const submitTxid = async () => {
+    if (!txid.trim() || !orderId) return;
+    setVerifying(true);
+
+    // Save TXID to order
+    await supabase.from("orders").update({ txid: txid.trim() } as any).eq("id", orderId);
+
+    setStatus("processing");
+
+    // Process payment via RPC (notifies vendor automatically)
+    const { data: result, error } = await supabase.rpc("process_order_payment", {
+      _order_id: orderId,
+      _tx_hash: txid.trim(),
+      _ltc_address: CENTRAL_POOL_ADDRESS,
     });
 
-    if (addrData) {
-      const addr = addrData as any;
-      setPaymentData({ address: addr.address, expires_at: addr.expires_at, qr_data: addr.qr_data });
+    if (error) {
+      toast.error("Ödeme işlenemedi: " + error.message);
+      setStatus("txid_input");
+    } else {
+      setStatus("paid");
+      toast.success("Ödeme onaylandı! Satıcıya bildirim gönderildi.");
     }
-
-    setTimeout(() => setStatus("processing"), 6000);
-    setTimeout(async () => {
-      const { data: result } = await supabase.rpc("process_order_payment", {
-        _order_id: order.id,
-        _ltc_address: (addrData as any)?.address || "",
-      });
-
-      if (result && (result as any).error) {
-        toast.error((result as any).error);
-        setStatus("idle");
-      } else {
-        setStatus("paid");
-        const r = result as any;
-        toast.success(`Ödeme onaylandı! Komisyon: %${r?.commission_rate || commissionRate} (${r?.commission} LTC)`);
-      }
-    }, 10000);
+    setVerifying(false);
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
@@ -149,7 +162,11 @@ export default function ProductDetail() {
                 <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-mono font-bold text-primary neon-text">{product.price} LTC</div>
+                <div className="text-sm font-mono text-muted-foreground line-through">{product.price} LTC</div>
+                <div className="text-2xl font-mono font-bold text-primary neon-text">{totalPrice.toFixed(4)} LTC</div>
+                <div className="text-[10px] font-mono text-yellow-500 mt-0.5">
+                  +%{(SERVICE_FEE_RATE * 100).toFixed(0)} Sistem Hizmet Bedeli ({serviceFee.toFixed(4)} LTC)
+                </div>
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono mt-1 ${
                   product.type === "digital" ? "bg-blue-500/10 text-blue-400" : "bg-orange-500/10 text-orange-400"
                 }`}>
@@ -164,7 +181,6 @@ export default function ProductDetail() {
               </div>
               <VendorRating vendorId={product.vendor_id} size="md" />
               <div className="text-xs text-muted-foreground font-mono">Stok: {product.stock}</div>
-              <div className="text-xs text-muted-foreground font-mono">Komisyon: %{commissionRate}</div>
               {product.category && <div className="text-[10px] font-mono px-2 py-0.5 bg-secondary rounded text-muted-foreground">{product.category}</div>}
             </div>
           </div>
@@ -174,8 +190,8 @@ export default function ProductDetail() {
         <div className="glass-card rounded-lg p-3 mb-4 flex items-center gap-3 border border-primary/20">
           <Shield className="w-5 h-5 text-primary flex-shrink-0" />
           <div>
-            <div className="text-[11px] font-mono font-bold text-primary">Anonim İşlem</div>
-            <div className="text-[9px] font-mono text-muted-foreground">Tek kullanımlık adres • Tarayıcı geçmişi koruması • Sipariş hash'leme</div>
+            <div className="text-[11px] font-mono font-bold text-primary">Merkezi Havuz Sistemi</div>
+            <div className="text-[9px] font-mono text-muted-foreground">Sabit havuz adresi • %5 hizmet bedeli • Otomatik escrow • TXID doğrulama</div>
           </div>
         </div>
 
@@ -192,30 +208,41 @@ export default function ProductDetail() {
             whileTap={{ scale: 0.98 }}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-primary-foreground rounded-lg font-mono font-bold neon-glow-btn text-sm"
           >
-            <ShoppingCart className="w-4 h-4" /> SATIN AL — Escrow Başlat
+            <ShoppingCart className="w-4 h-4" /> SATIN AL — {totalPrice.toFixed(4)} LTC
           </motion.button>
         )}
 
         {status !== "idle" && (
           <div className="glass-card rounded-lg p-6 neon-border">
-            <div className="flex items-center gap-6 mb-4">
-              {(["pending", "processing", "paid"] as const).map((s, i) => (
-                <div key={s} className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono ${
-                    status === s ? "bg-primary text-primary-foreground animate-pulse" :
-                    (["pending", "processing", "paid"].indexOf(status) > i ? "bg-green-600 text-white" : "bg-secondary text-muted-foreground")
-                  }`}>
-                    {["pending", "processing", "paid"].indexOf(status) > i ? <CheckCircle className="w-3 h-3" /> : i + 1}
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground">
-                    {s === "pending" ? "Beklemede" : s === "processing" ? "Onaylanıyor" : "Ödendi"}
-                  </span>
-                  {i < 2 && <div className="w-8 h-px bg-border" />}
-                </div>
-              ))}
+            {/* Order ID */}
+            <div className="flex items-center gap-2 mb-4 p-2 bg-secondary rounded">
+              <Hash className="w-4 h-4 text-primary" />
+              <span className="text-xs font-mono text-muted-foreground">Sipariş Kimliği:</span>
+              <span className="text-xs font-mono text-foreground font-bold">{orderId.slice(0, 8).toUpperCase()}</span>
             </div>
 
-            {status === "pending" && paymentData && (
+            {/* Progress Steps */}
+            <div className="flex items-center gap-6 mb-4">
+              {(["pending", "txid_input", "processing", "paid"] as const).map((s, i) => {
+                const labels = ["Adres", "TXID", "Onay", "Ödendi"];
+                const currentIdx = ["pending", "txid_input", "processing", "paid"].indexOf(status);
+                return (
+                  <div key={s} className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono ${
+                      status === s ? "bg-primary text-primary-foreground animate-pulse" :
+                      (currentIdx > i ? "bg-green-600 text-white" : "bg-secondary text-muted-foreground")
+                    }`}>
+                      {currentIdx > i ? <CheckCircle className="w-3 h-3" /> : i + 1}
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground">{labels[i]}</span>
+                    {i < 3 && <div className="w-6 h-px bg-border" />}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pending: Show address */}
+            {(status === "pending" || status === "txid_input") && (
               <div className="text-center">
                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono mb-4 ${
                   timeLeft < 300 ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-500"
@@ -225,25 +252,51 @@ export default function ProductDetail() {
                   {timeLeft < 300 && <AlertTriangle className="w-3 h-3" />}
                 </div>
                 <p className="text-xs text-muted-foreground font-mono mb-3">
-                  Bu adres sadece size özeldir. <span className="text-primary">{product.price} LTC</span> gönderin:
+                  Merkezi havuz adresine <span className="text-primary font-bold">{totalPrice.toFixed(4)} LTC</span> gönderin:
                 </p>
                 <div className="inline-block p-3 bg-secondary rounded-lg mb-3">
-                  <QRCodeSVG value={paymentData.qr_data} size={160} bgColor="transparent" fgColor="#d9d9d9" />
+                  <QRCodeSVG value={`litecoin:${CENTRAL_POOL_ADDRESS}?amount=${totalPrice.toFixed(4)}`} size={160} bgColor="transparent" fgColor="#d9d9d9" />
                 </div>
-                <div className="bg-secondary rounded px-3 py-2 text-xs font-mono text-foreground break-all flex items-center gap-2">
+                <div className="bg-secondary rounded px-3 py-2 text-xs font-mono text-foreground break-all flex items-center gap-2 mb-4">
                   <Lock className="w-3 h-3 text-primary flex-shrink-0" />
-                  {paymentData.address}
+                  {CENTRAL_POOL_ADDRESS}
                 </div>
-                <div className="flex items-center justify-center gap-1 mt-3 text-xs text-yellow-500 font-mono">
-                  <Clock className="w-3 h-3" /> Ödeme bekleniyor...
-                </div>
+
+                {/* TXID Input */}
+                {status === "txid_input" && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <p className="text-xs font-mono text-muted-foreground mb-2">Ödeme yaptıktan sonra TXID'nizi girin:</p>
+                    <div className="flex gap-2">
+                      <input
+                        value={txid}
+                        onChange={(e) => setTxid(e.target.value)}
+                        placeholder="İşlem Hash (TXID)"
+                        className="flex-1 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <button
+                        onClick={submitTxid}
+                        disabled={!txid.trim() || verifying}
+                        className="px-4 py-2 bg-primary text-primary-foreground text-xs font-mono rounded font-bold neon-glow-btn flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {verifying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                        Doğrula
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {status === "pending" && (
+                  <div className="flex items-center justify-center gap-1 mt-3 text-xs text-yellow-500 font-mono">
+                    <Clock className="w-3 h-3" /> Adres hazırlanıyor...
+                  </div>
+                )}
               </div>
             )}
 
             {status === "processing" && (
               <div className="text-center py-4">
                 <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin mb-3" />
-                <p className="text-sm font-mono text-muted-foreground">Blockchain onayı bekleniyor...</p>
+                <p className="text-sm font-mono text-muted-foreground">İşlem doğrulanıyor...</p>
                 <p className="text-[10px] font-mono text-muted-foreground mt-1">Escrow havuzuna aktarılıyor</p>
               </div>
             )}
@@ -252,6 +305,7 @@ export default function ProductDetail() {
               <div className="text-center py-4">
                 <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
                 <p className="text-sm font-mono text-green-500 font-bold mb-2">Ödeme Onaylandı!</p>
+                <p className="text-[10px] font-mono text-muted-foreground mb-3">Satıcıya otomatik bildirim gönderildi</p>
                 {product.type === "digital" ? (
                   <div className="bg-secondary rounded-lg p-4 text-left">
                     <div className="flex items-center gap-2 text-xs text-green-500 font-mono mb-2">

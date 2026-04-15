@@ -358,8 +358,10 @@ export type Database = {
           notes: string | null
           product_id: string | null
           product_name: string | null
+          service_fee: number | null
           shipping_address: string | null
           status: string | null
+          txid: string | null
           updated_at: string
           vendor_id: string
         }
@@ -372,8 +374,10 @@ export type Database = {
           notes?: string | null
           product_id?: string | null
           product_name?: string | null
+          service_fee?: number | null
           shipping_address?: string | null
           status?: string | null
+          txid?: string | null
           updated_at?: string
           vendor_id: string
         }
@@ -386,8 +390,10 @@ export type Database = {
           notes?: string | null
           product_id?: string | null
           product_name?: string | null
+          service_fee?: number | null
           shipping_address?: string | null
           status?: string | null
+          txid?: string | null
           updated_at?: string
           vendor_id?: string
         }
