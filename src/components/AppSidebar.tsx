@@ -2,13 +2,14 @@ import { useAuth } from "@/lib/authContext";
 import { useCustomization } from "@/lib/customizationContext";
 import { useI18n } from "@/lib/i18n";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Shield, LayoutDashboard, ShoppingCart, Store, Wallet, FileWarning, ScrollText, LogOut, ArrowRightLeft, User, Package, Lock, Coins, MessageSquare, Palette } from "lucide-react";
+import { Shield, LayoutDashboard, ShoppingCart, Store, Wallet, FileWarning, ScrollText, LogOut, ArrowRightLeft, User, Package, Lock, Coins, MessageSquare, Palette, ShoppingBag } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 
 type LinkDef = { to: string; labelKey: string; icon: any };
 
 const adminLinks: LinkDef[] = [
   { to: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
+  { to: "/admin/store", labelKey: "store", icon: ShoppingBag },
   { to: "/admin/security-logs", labelKey: "securityLogs", icon: ScrollText },
   { to: "/admin/disputes", labelKey: "disputes", icon: FileWarning },
   { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },

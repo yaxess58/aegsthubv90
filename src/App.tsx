@@ -20,6 +20,7 @@ import SecuritySettings from "./pages/SecuritySettings";
 import Forum from "./pages/Forum";
 import VendorProfile from "./pages/VendorProfile";
 import Customization from "./pages/Customization";
+import AdminStore from "./pages/AdminStore";
 import { ReactNode } from "react";
 import BackgroundMusic from "./components/BackgroundMusic";
 import { BackgroundProvider } from "./lib/backgroundContext";
@@ -61,6 +62,7 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/security-logs" element={<ProtectedRoute allowedRoles={["admin"]}><SecurityLogs /></ProtectedRoute>} />
       <Route path="/admin/disputes" element={<ProtectedRoute allowedRoles={["admin"]}><Disputes /></ProtectedRoute>} />
+      <Route path="/admin/store" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStore /></ProtectedRoute>} />
       <Route path="/vendor" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorDashboard /></ProtectedRoute>} />
       <Route path="/vendor/wallet" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorWalletPage /></ProtectedRoute>} />
       <Route path="/vendor/bond" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorBond /></ProtectedRoute>} />
