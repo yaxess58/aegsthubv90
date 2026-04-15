@@ -86,6 +86,7 @@ export default function VendorDashboard() {
     }
 
     const { data, error } = await supabase.from("products").insert({
+      title: form.name,
       name: form.name,
       description: form.description,
       price: parseFloat(form.price),
@@ -96,7 +97,7 @@ export default function VendorDashboard() {
       tracking_number: form.type === "physical" ? form.deliveryData : null,
       image_emoji: imageUrl ? null : (form.type === "digital" ? "🔐" : "📦"),
       image_url: imageUrl,
-    }).select().single();
+    } as any).select().single();
 
     if (error) { toast.error(error.message); setSaving(false); return; }
     if (data) {

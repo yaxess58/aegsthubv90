@@ -87,10 +87,11 @@ export default function ProductDetail() {
     const { data: order, error: orderErr } = await supabase.from("orders").insert({
       product_id: product.id,
       buyer_id: user.id,
+      vendor_id: product.vendor_id,
       status: "pending",
       amount: product.price,
       delivery_method: product.type === "digital" ? "cargo" : deliveryMethod,
-    }).select().single();
+    } as any).select().single();
 
     if (orderErr) { toast.error("Sipariş oluşturulamadı"); setStatus("idle"); return; }
 
