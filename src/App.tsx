@@ -24,6 +24,7 @@ import { ReactNode } from "react";
 import BackgroundMusic from "./components/BackgroundMusic";
 import { BackgroundProvider } from "./lib/backgroundContext";
 import { CustomizationProvider } from "./lib/customizationContext";
+import { I18nProvider } from "./lib/i18n";
 
 const queryClient = new QueryClient();
 
@@ -83,12 +84,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CustomizationProvider>
-            <BackgroundProvider>
-              <AppRoutes />
-              <BackgroundMusic />
-            </BackgroundProvider>
-          </CustomizationProvider>
+          <I18nProvider>
+            <CustomizationProvider>
+              <BackgroundProvider>
+                <AppRoutes />
+                <BackgroundMusic />
+              </BackgroundProvider>
+            </CustomizationProvider>
+          </I18nProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
