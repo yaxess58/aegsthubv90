@@ -10,6 +10,10 @@ type LinkDef = { to: string; labelKey: string; icon: any };
 const adminLinks: LinkDef[] = [
   { to: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
   { to: "/admin/store", labelKey: "store", icon: ShoppingBag },
+  { to: "/market", labelKey: "market", icon: ShoppingCart },
+  { to: "/orders", labelKey: "myOrders", icon: Package },
+  { to: "/vendor", labelKey: "myProducts", icon: Store },
+  { to: "/vendor/wallet", labelKey: "wallet", icon: Wallet },
   { to: "/admin/security-logs", labelKey: "securityLogs", icon: ScrollText },
   { to: "/admin/disputes", labelKey: "disputes", icon: FileWarning },
   { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
@@ -20,6 +24,8 @@ const adminLinks: LinkDef[] = [
 
 const vendorLinks: LinkDef[] = [
   { to: "/vendor", labelKey: "myProducts", icon: Store },
+  { to: "/market", labelKey: "market", icon: ShoppingCart },
+  { to: "/orders", labelKey: "myOrders", icon: Package },
   { to: "/vendor/wallet", labelKey: "wallet", icon: Wallet },
   { to: "/vendor/bond", labelKey: "deposit", icon: Coins },
   { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },

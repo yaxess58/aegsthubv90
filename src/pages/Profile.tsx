@@ -99,10 +99,10 @@ export default function Profile() {
     const ext = file.name.split(".").pop();
     const path = `${user.id}/banner.${ext}`;
     
-    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (upErr) { toast.error("Banner yükleme hatası"); setUploadingBanner(false); return; }
+    const { error: upErr } = await supabase.storage.from("banners").upload(path, file, { upsert: true });
+    if (upErr) { toast.error("Banner yükleme hatası: " + upErr.message); setUploadingBanner(false); return; }
 
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage.from("banners").getPublicUrl(path);
     await (supabase as any).from("profiles").update({ banner_url: publicUrl }).eq("user_id", user.id);
     setProfile((p) => ({ ...p, banner_url: publicUrl }));
     toast.success("Banner güncellendi! 🖼️");
