@@ -5,7 +5,7 @@ import PageShell from "@/components/PageShell";
 import { Palette, Type, Sparkles, PanelLeft, RotateCcw, ImagePlus, Trash2, Wallpaper, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useRef } from "react";
+import { useRef, forwardRef } from "react";
 
 const themePresets: { nameKey: TranslationKey; hue: number }[] = [
   { nameKey: "red", hue: 349 },
@@ -30,21 +30,25 @@ const fontSizeOptions: { value: CustomizationSettings["fontSize"]; labelKey: Tra
   { value: "large", labelKey: "large" },
 ];
 
-function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-lg p-5 neon-border space-y-4"
-    >
-      <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-mono font-bold text-foreground">{title}</h2>
-      </div>
-      {children}
-    </motion.div>
-  );
-}
+const Section = forwardRef<HTMLDivElement, { icon: any; title: string; children: React.ReactNode }>(
+  ({ icon: Icon, title, children }, ref) => {
+    return (
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card rounded-lg p-5 neon-border space-y-4"
+      >
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-mono font-bold text-foreground">{title}</h2>
+        </div>
+        {children}
+      </motion.div>
+    );
+  }
+);
+Section.displayName = "Section";
 
 export default function Customization() {
   const { settings, updateSettings, resetSettings } = useCustomization();

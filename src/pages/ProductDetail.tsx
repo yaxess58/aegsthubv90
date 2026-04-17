@@ -176,9 +176,12 @@ export default function ProductDetail() {
               </div>
             </div>
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+              <button
+                onClick={() => window.location.assign(`/vendor/${product.vendor_id}`)}
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary font-mono transition-colors"
+              >
                 <User className="w-3 h-3" /> {vendorName}
-              </div>
+              </button>
               <VendorRating vendorId={product.vendor_id} size="md" />
               <div className="text-xs text-muted-foreground font-mono">Stok: {product.stock}</div>
               {product.category && <div className="text-[10px] font-mono px-2 py-0.5 bg-secondary rounded text-muted-foreground">{product.category}</div>}
@@ -196,13 +199,19 @@ export default function ProductDetail() {
         </div>
 
         {/* Delivery Method Selection */}
-        {status === "idle" && product.type === "physical" && (
+        {status === "idle" && product.type === "physical" && user?.id !== product.vendor_id && (
           <div className="glass-card rounded-lg p-4 mb-4">
             <DeliveryMethodSelector value={deliveryMethod} onChange={setDeliveryMethod} productType={product.type} />
           </div>
         )}
 
-        {status === "idle" && (
+        {status === "idle" && user?.id === product.vendor_id && (
+          <div className="glass-card rounded-lg p-4 text-center text-xs font-mono text-muted-foreground border border-yellow-500/30">
+            ⚠️ Bu sizin kendi ürününüz — satın alamazsınız.
+          </div>
+        )}
+
+        {status === "idle" && user?.id !== product.vendor_id && (
           <motion.button
             onClick={startPayment}
             whileTap={{ scale: 0.98 }}

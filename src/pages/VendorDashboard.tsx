@@ -17,13 +17,16 @@ interface ProductRow {
   image_url: string | null;
   delivery_data: string | null;
   tracking_number: string | null;
+  category: string | null;
 }
+
+const CATEGORIES = ["Dijital Hesap", "Yazılım/Lisans", "E-kitap", "Servis", "Tasarım", "Oyun", "Diğer"];
 
 export default function VendorDashboard() {
   const { user } = useAuth();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "" });
+  const [form, setForm] = useState({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0] });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -92,6 +95,7 @@ export default function VendorDashboard() {
       price: parseFloat(form.price),
       stock: parseInt(form.stock) || 0,
       type: form.type,
+      category: form.category,
       vendor_id: user.id,
       delivery_data: form.type === "digital" ? form.deliveryData : null,
       tracking_number: form.type === "physical" ? form.deliveryData : null,
@@ -102,7 +106,7 @@ export default function VendorDashboard() {
     if (error) { toast.error(error.message); setSaving(false); return; }
     if (data) {
       setProducts((prev) => [data, ...prev]);
-      setForm({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "" });
+      setForm({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0] });
       setImageFile(null);
       setImagePreview(null);
       setShowAdd(false);
@@ -155,6 +159,9 @@ export default function VendorDashboard() {
             </select>
             <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Fiyat (LTC)" type="number" step="0.01" className="bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
             <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="Stok" type="number" className="bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
+              {CATEGORIES.map((c) => <option key={c} value={c}>📂 {c}</option>)}
+            </select>
             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Açıklama" className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" rows={2} />
             <input value={form.deliveryData} onChange={(e) => setForm({ ...form, deliveryData: e.target.value })} placeholder={form.type === "digital" ? "Teslimat verisi (key/link)" : "Kargo takip no"} className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
@@ -181,6 +188,11 @@ export default function VendorDashboard() {
               <div>
                 <div className="text-sm font-medium text-foreground">{p.name}</div>
                 <div className="text-xs text-muted-foreground line-clamp-1">{p.description}</div>
+                {p.category && (
+                  <span className="inline-block mt-1 text-[9px] font-mono px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                    📂 {p.category}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">

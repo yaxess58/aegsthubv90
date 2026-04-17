@@ -12,10 +12,9 @@ interface OrderRow {
   id: string;
   amount: number;
   status: string;
-  delivery_confirmed: boolean;
+  delivery_confirmed: boolean | null;
   delivery_method: string;
   created_at: string;
-  ltc_address: string | null;
   products: { name: string; image_url: string | null; image_emoji: string | null; type: string; vendor_id: string } | null;
 }
 
@@ -32,11 +31,11 @@ export default function Orders() {
     const fetch = async () => {
       const query = supabase
         .from("orders")
-        .select("id, amount, status, delivery_confirmed, delivery_method, created_at, ltc_address, products:product_id(name, image_url, image_emoji, type, vendor_id)")
+        .select("id, amount, status, delivery_confirmed, delivery_method, created_at, products:product_id(name, image_url, image_emoji, type, vendor_id)")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (role === "buyer") query.eq("buyer_id", user.id);
+      if (role === "buyer" || role === "vendor") query.eq("buyer_id", user.id);
 
       const { data } = await query;
       if (data) setOrders(data as any);

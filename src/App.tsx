@@ -63,14 +63,14 @@ function AppRoutes() {
       <Route path="/admin/security-logs" element={<ProtectedRoute allowedRoles={["admin"]}><SecurityLogs /></ProtectedRoute>} />
       <Route path="/admin/disputes" element={<ProtectedRoute allowedRoles={["admin"]}><Disputes /></ProtectedRoute>} />
       <Route path="/admin/store" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStore /></ProtectedRoute>} />
-      <Route path="/vendor" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorDashboard /></ProtectedRoute>} />
-      <Route path="/vendor/wallet" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorWalletPage /></ProtectedRoute>} />
-      <Route path="/vendor/bond" element={<ProtectedRoute allowedRoles={["vendor"]}><VendorBond /></ProtectedRoute>} />
-      <Route path="/market" element={<ProtectedRoute allowedRoles={["buyer"]}><Market /></ProtectedRoute>} />
-      <Route path="/product/:id" element={<ProtectedRoute allowedRoles={["buyer"]}><ProductDetail /></ProtectedRoute>} />
+      <Route path="/vendor" element={<ProtectedRoute allowedRoles={["vendor", "admin"]}><VendorDashboard /></ProtectedRoute>} />
+      <Route path="/vendor/wallet" element={<ProtectedRoute allowedRoles={["vendor", "admin"]}><VendorWalletPage /></ProtectedRoute>} />
+      <Route path="/vendor/bond" element={<ProtectedRoute allowedRoles={["vendor", "admin"]}><VendorBond /></ProtectedRoute>} />
+      <Route path="/market" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Market /></ProtectedRoute>} />
+      <Route path="/product/:id" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><ProductDetail /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Transactions /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute allowedRoles={["buyer", "vendor"]}><Profile /></ProtectedRoute>} />
-      <Route path="/orders" element={<ProtectedRoute allowedRoles={["buyer", "admin"]}><Orders /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Profile /></ProtectedRoute>} />
+      <Route path="/orders" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Orders /></ProtectedRoute>} />
       <Route path="/security" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><SecuritySettings /></ProtectedRoute>} />
       <Route path="/forum" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><Forum /></ProtectedRoute>} />
       <Route path="/vendor/:vendorId" element={<ProtectedRoute allowedRoles={["buyer", "vendor", "admin"]}><VendorProfile /></ProtectedRoute>} />
