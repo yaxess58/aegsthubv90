@@ -17,6 +17,7 @@ interface ProductRow {
   image_url: string | null;
   delivery_data: string | null;
   tracking_number: string | null;
+  category: string | null;
 }
 
 const CATEGORIES = ["Dijital Hesap", "Yazılım/Lisans", "E-kitap", "Servis", "Tasarım", "Oyun", "Diğer"];
@@ -187,6 +188,11 @@ export default function VendorDashboard() {
               <div>
                 <div className="text-sm font-medium text-foreground">{p.name}</div>
                 <div className="text-xs text-muted-foreground line-clamp-1">{p.description}</div>
+                {p.category && (
+                  <span className="inline-block mt-1 text-[9px] font-mono px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                    📂 {p.category}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
