@@ -18,15 +18,17 @@ interface ProductRow {
   delivery_data: string | null;
   tracking_number: string | null;
   category: string | null;
+  origin: string | null;
+  destination: string | null;
 }
 
-const CATEGORIES = ["Dijital Hesap", "Yazılım/Lisans", "E-kitap", "Servis", "Tasarım", "Oyun", "Diğer"];
+const CATEGORIES = ["Dijital Veriler", "Lojistik Rotaları", "VIP Erişim"];
 
 export default function VendorDashboard() {
   const { user } = useAuth();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0] });
+  const [form, setForm] = useState({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0], origin: "", destination: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -96,6 +98,8 @@ export default function VendorDashboard() {
       stock: parseInt(form.stock) || 0,
       type: form.type,
       category: form.category,
+      origin: form.origin || null,
+      destination: form.destination || null,
       vendor_id: user.id,
       delivery_data: form.type === "digital" ? form.deliveryData : null,
       tracking_number: form.type === "physical" ? form.deliveryData : null,
@@ -105,8 +109,8 @@ export default function VendorDashboard() {
 
     if (error) { toast.error(error.message); setSaving(false); return; }
     if (data) {
-      setProducts((prev) => [data, ...prev]);
-      setForm({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0] });
+      setProducts((prev) => [data as ProductRow, ...prev]);
+      setForm({ name: "", description: "", price: "", stock: "", type: "digital", deliveryData: "", category: CATEGORIES[0], origin: "", destination: "" });
       setImageFile(null);
       setImagePreview(null);
       setShowAdd(false);
@@ -162,6 +166,8 @@ export default function VendorDashboard() {
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
               {CATEGORIES.map((c) => <option key={c} value={c}>📂 {c}</option>)}
             </select>
+            <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} placeholder="📍 Origin (Çıkış)" className="bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+            <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="🎯 Destination (Varış)" className="bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Açıklama" className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" rows={2} />
             <input value={form.deliveryData} onChange={(e) => setForm({ ...form, deliveryData: e.target.value })} placeholder={form.type === "digital" ? "Teslimat verisi (key/link)" : "Kargo takip no"} className="col-span-2 bg-secondary border border-border rounded px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>

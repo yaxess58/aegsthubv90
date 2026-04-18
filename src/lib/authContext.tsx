@@ -10,7 +10,7 @@ interface AuthState {
   loading: boolean;
   mfaChallenge: { factorId: string; challengeId: string } | null;
   login: (email: string, password: string) => Promise<string | null>;
-  signup: (email: string, password: string, displayName: string, role: "vendor" | "buyer") => Promise<string | null>;
+  signup: (email: string, password: string, displayName: string, role: "vendor" | "buyer", withdrawPin?: string, pgpKey?: string) => Promise<string | null>;
   verifyMfa: (code: string) => Promise<string | null>;
   logout: () => Promise<void>;
 }
@@ -124,7 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const signup = async (email: string, password: string, displayName: string, selectedRole: "vendor" | "buyer"): Promise<string | null> => {
+  const signup = async (
+    email: string,
+    password: string,
+    displayName: string,
+    selectedRole: "vendor" | "buyer",
+    withdrawPin?: string,
+    pgpKey?: string,
+  ): Promise<string | null> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -138,6 +145,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error: roleError } = await supabase.rpc("assign_role_on_signup", { _role: selectedRole });
     if (roleError) return roleError.message;
+
+    // Hash PIN and persist along with PGP key on profile
+    try {
+      let pinHash: string | null = null;
+      if (withdrawPin && /^\d{6}$/.test(withdrawPin)) {
+        const buf = new TextEncoder().encode(withdrawPin);
+        const hash = await crypto.subtle.digest("SHA-256", buf);
+        pinHash = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+      const uid = data.session.user.id;
+      const update: Record<string, unknown> = {};
+      if (pinHash) update.withdraw_pin_hash = pinHash;
+      if (pgpKey && pgpKey.trim()) update.pgp_key = pgpKey.trim();
+      if (Object.keys(update).length) {
+        await supabase.from("profiles").update(update).eq("user_id", uid);
+      }
+    } catch (e) {
+      console.warn("Profile security fields not saved:", e);
+    }
 
     roleRequestIdRef.current += 1;
     setRole(selectedRole);
