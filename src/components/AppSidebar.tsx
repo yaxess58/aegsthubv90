@@ -13,6 +13,7 @@ const adminLinks: LinkDef[] = [
   { to: "/market", labelKey: "market", icon: ShoppingCart },
   { to: "/orders", labelKey: "myOrders", icon: Package },
   { to: "/vendor", labelKey: "myProducts", icon: Store },
+  { to: "/wallet", labelKey: "wallet", icon: Coins },
   { to: "/vendor/wallet", labelKey: "wallet", icon: Wallet },
   { to: "/admin/security-logs", labelKey: "securityLogs", icon: ScrollText },
   { to: "/admin/disputes", labelKey: "disputes", icon: FileWarning },
@@ -26,6 +27,7 @@ const vendorLinks: LinkDef[] = [
   { to: "/vendor", labelKey: "myProducts", icon: Store },
   { to: "/market", labelKey: "market", icon: ShoppingCart },
   { to: "/orders", labelKey: "myOrders", icon: Package },
+  { to: "/wallet", labelKey: "wallet", icon: Coins },
   { to: "/vendor/wallet", labelKey: "wallet", icon: Wallet },
   { to: "/vendor/bond", labelKey: "deposit", icon: Coins },
   { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
@@ -38,6 +40,7 @@ const vendorLinks: LinkDef[] = [
 const buyerLinks: LinkDef[] = [
   { to: "/market", labelKey: "market", icon: ShoppingCart },
   { to: "/orders", labelKey: "myOrders", icon: Package },
+  { to: "/wallet", labelKey: "wallet", icon: Coins },
   { to: "/transactions", labelKey: "transactions", icon: ArrowRightLeft },
   { to: "/forum", labelKey: "forum", icon: MessageSquare },
   { to: "/security", labelKey: "security", icon: Lock },

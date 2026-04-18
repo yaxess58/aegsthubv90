@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
-import { Key, Package, Search, User } from "lucide-react";
+import { Key, Package, Search, User, MapPin, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import VendorRating from "@/components/VendorRating";
+import ProductDescriptionModal from "@/components/ProductDescriptionModal";
 
 const SERVICE_FEE_RATE = 0.05;
+const FIXED_CATEGORIES = ["Dijital Veriler", "Lojistik Rotaları", "VIP Erişim"];
 
 interface ProductRow {
   id: string;
@@ -19,6 +21,8 @@ interface ProductRow {
   stock: number;
   vendor_id: string;
   category: string | null;
+  origin: string | null;
+  destination: string | null;
 }
 
 export default function Market() {
@@ -28,12 +32,13 @@ export default function Market() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "digital" | "physical">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [modalProduct, setModalProduct] = useState<ProductRow | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, name, description, price, type, image_emoji, image_url, stock, vendor_id, category")
+        .select("id, name, description, price, type, image_emoji, image_url, stock, vendor_id, category, origin, destination")
         .gt("stock", 0)
         .order("created_at", { ascending: false });
       if (data) {
@@ -56,11 +61,7 @@ export default function Market() {
     fetch();
   }, []);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((p) => { if (p.category) set.add(p.category); });
-    return Array.from(set);
-  }, [products]);
+  const categories = FIXED_CATEGORIES;
 
   const filtered = products.filter((p) => {
     if (filter !== "all" && p.type !== filter) return false;
@@ -102,29 +103,27 @@ export default function Market() {
       </div>
 
       {/* Category chips */}
-      {categories.length > 0 && (
-        <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <button
+          onClick={() => setCategoryFilter("all")}
+          className={`px-3 py-1 text-[10px] font-mono rounded-full border transition-all ${
+            categoryFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+          }`}
+        >
+          Tüm Kategoriler
+        </button>
+        {categories.map((c) => (
           <button
-            onClick={() => setCategoryFilter("all")}
+            key={c}
+            onClick={() => setCategoryFilter(c)}
             className={`px-3 py-1 text-[10px] font-mono rounded-full border transition-all ${
-              categoryFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              categoryFilter === c ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
             }`}
           >
-            Tüm Kategoriler
+            📂 {c}
           </button>
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategoryFilter(c)}
-              className={`px-3 py-1 text-[10px] font-mono rounded-full border transition-all ${
-                categoryFilter === c ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-              }`}
-            >
-              📂 {c}
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       {filtered.length === 0 && (
         <div className="glass-card rounded-lg p-12 text-center">
@@ -162,6 +161,13 @@ export default function Market() {
                 <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">{p.name}</div>
                 <div className="text-xs text-muted-foreground mt-1 line-clamp-2 min-h-[2rem]">{p.description}</div>
 
+                {(p.origin || p.destination) && (
+                  <div className="flex items-center gap-1 mt-2 text-[10px] font-mono text-muted-foreground">
+                    <MapPin className="w-3 h-3 text-primary" />
+                    <span className="truncate">{p.origin || "?"} → {p.destination || "?"}</span>
+                  </div>
+                )}
+
                 {/* Vendor link */}
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/vendor/${p.vendor_id}`); }}
@@ -170,6 +176,13 @@ export default function Market() {
                   <User className="w-3 h-3" />
                   <span className="truncate max-w-[100px]">{vendorName}</span>
                   <VendorRating vendorId={p.vendor_id} />
+                </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setModalProduct(p); }}
+                  className="flex items-center gap-1 mt-2 text-[10px] font-mono text-primary hover:underline"
+                >
+                  <Eye className="w-3 h-3" /> Detaylar
                 </button>
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
@@ -192,6 +205,21 @@ export default function Market() {
           );
         })}
       </div>
+
+      <ProductDescriptionModal
+        product={modalProduct ? {
+          id: modalProduct.id,
+          title: modalProduct.name,
+          description: modalProduct.description,
+          price: modalProduct.price,
+          category: modalProduct.category,
+          origin: modalProduct.origin,
+          destination: modalProduct.destination,
+          image_emoji: modalProduct.image_emoji,
+        } : null}
+        open={!!modalProduct}
+        onOpenChange={(v) => !v && setModalProduct(null)}
+      />
     </PageShell>
   );
 }

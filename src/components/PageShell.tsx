@@ -1,5 +1,7 @@
 import { ReactNode } from "react";
 import AppSidebar from "./AppSidebar";
+import SessionTimerBadge from "./SessionTimerBadge";
+import KizilyurekAssistant from "./KizilyurekAssistant";
 import { useBackground } from "@/lib/backgroundContext";
 import { useCustomization } from "@/lib/customizationContext";
 
@@ -23,7 +25,9 @@ export default function PageShell({ children }: { children: ReactNode }) {
         />
       )}
       <AppSidebar />
+      <SessionTimerBadge />
       <main className={`${margin} p-6 relative z-10 transition-all duration-300`}>{children}</main>
+      <KizilyurekAssistant />
     </div>
   );
 }
