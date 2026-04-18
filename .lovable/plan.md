@@ -1,66 +1,126 @@
 
 
-Kullanıcı birden fazla sorun ve özellik bildirdi. Plan yapmadan önce kodu hızlıca inceleyeyim.
+# Yeraltı Marketi Profesyonel Yükseltme Planı
 
-Sorunlar:
-1. Profil ve banner koyarken hata - storage bucket eksik (DB'de bucket yok)
-2. Ürünlerde satıcı profilleri yok - market/product detail satıcı bilgisini göstermiyor
-3. Satıcılar da ürün alabilmeli - şu an vendor rolü market'e giremiyor olabilir
-4. Satıcılar kategori seçebilmeli - VendorDashboard'da kategori alanı yok ama products tablosunda category sütunu var
-5. Admin her şeyi test edebilmeli - admin için ürün ekleme/satın alma yetkisi
+Kullanıcı 4 büyük özellik bloğu istiyor. Hepsini tek seferde uygulayacağım, ancak basitlik ve istikrar için **mevcut ödeme akışına dokunmuyorum**.
 
-Hızlıca App.tsx, Profile, Market, Customization sayfalarını incelemem gerek planı netleştirmek için.
+---
 
-# Düzeltme ve İyileştirme Planı
+## 1. Güvenlik & Oturum Protokolü
 
-## Tespit Edilen Sorunlar
+### A. Kayıt Formuna Yeni Alanlar
+- **DB değişikliği**: `profiles` tablosuna iki alan ekle:
+  - `withdraw_pin_hash` (text, nullable) — 6 haneli PIN'in SHA-256 hash'i (ham PIN asla saklanmaz)
+  - `pgp_public_key` (text, nullable) — zaten `pgp_key` mevcut, onu kullanacağız (gereksiz duplicate yok)
+- **`Login.tsx`**: Signup formuna iki alan ekle:
+  - "Para Çekme PIN'i (6 hane)" — sadece rakam
+  - "PGP Public Key" (textarea, opsiyonel)
+- **`authContext.tsx`** `signup`: PIN'i `crypto.subtle.digest('SHA-256', ...)` ile hashle, signup sonrası `profiles` tablosuna kaydet
 
-1. **Profil/Banner yükleme hatası**: Storage bucket'lar (`avatars`, `banners`, `product-images`) veritabanında tanımlı değil → upload başarısız oluyor
-2. **Ürünlerde satıcı yok**: Market ve ProductDetail sayfaları `vendor_id`'yi `profiles` tablosuyla join etmiyor → satıcı adı görünmüyor
-3. **Satıcılar alışveriş yapamıyor**: Sidebar'da vendor rolüne `Market` ve `Orders` linkleri yok
-4. **Kategori seçimi yok**: VendorDashboard'da ürün eklerken kategori alanı eksik (DB'de `category` sütunu var ama form'da yok)
-5. **Admin test yetkisi**: Admin sidebar'ında `Market`, `Orders`, `My Products` linkleri yok → admin alıcı/satıcı akışını test edemiyor
+### B. Session Timer (Oturum Süresi)
+- **`Login.tsx`**: Login formunun üstüne 3 seçenek tab'ı: 30dk / 1sa / 2sa (default 1sa)
+- Seçim `localStorage.setItem("session_duration_min", "30|60|120")` olarak kaydedilir
+- **Yeni context: `src/lib/sessionTimerContext.tsx`**:
+  - Login olduğunda `Date.now() + duration * 60_000` değerini `localStorage.setItem("session_expires_at", ts)` olarak yazar
+  - Her saniye kalan süreyi hesaplar
+  - 0'a ulaşınca: `supabase.auth.signOut()` + tüm `localStorage` ve `sessionStorage` temizliği + cookie temizliği + `navigate("/")`
+- **Yeni component: `src/components/SessionTimerBadge.tsx`**:
+  - Sağ üst köşede sabit `fixed top-4 right-4 z-50` rozet
+  - `HH:MM:SS` formatında geri sayım
+  - Son 5 dakikada kırmızıya döner ve titrer
+- **`PageShell.tsx`**: SessionTimerBadge'i göster (sadece login sonrası sayfalarda)
 
-## Yapılacaklar
+---
 
-### 1. Storage Bucket'ları Oluştur (Migration)
-- `avatars` bucket (public, 2MB limit, image/*)
-- `banners` bucket (public, 5MB limit, image/*)
-- `product-images` bucket (public, 5MB limit, image/*)
-- Her bucket için RLS: kullanıcı kendi `{user_id}/...` klasörüne yükleyebilir, herkes okuyabilir
+## 2. Wallet Sayfası (LTC Adresi)
 
-### 2. Satıcı Profillerini Ürünlere Bağla
-- `src/pages/Market.tsx`: `products` çekerken `profiles` join et, ürün kartında "Satıcı: {display_name}" göster, satıcı profiline tıklanabilir link ekle
-- `src/pages/ProductDetail.tsx`: Satıcı bilgisi bölümüne avatar + display_name + rating ekle, `/vendor/{vendor_id}` linki
+- **Yeni sayfa: `src/pages/Wallet.tsx`** — kullanıcının kişisel cüzdan sayfası (vendor wallet'tan farklı)
+- **Yeni route**: `/wallet` (App.tsx, tüm rollere açık)
+- **Yeni sidebar linki**: tüm rollerde "Wallet" / `Coins` ikonu
+- İçerik:
+  - "Generate New LTC Address" butonu
+  - Tıklayınca: kriptografik olarak rastgele bir LTC bech32-benzeri adres üret (ltc1q... + 38 hex karakter, gerçek bech32 doğrulamasına gerek yok — UI amaçlı)
+  - QR kod (`qrcode.react`) ile göster
+  - Kopyala butonu
+  - Kırmızı uyarı: "⚠️ Bu adres 24 saat geçerlidir. Süresi dolduktan sonra ödeme yaparsanız fonlar kaybolur."
+  - Mavi info: "ℹ️ Bakiyeniz 3 ağ onayından sonra güncellenecektir."
+  - Adres + üretilme zamanı `localStorage`'a kaydedilir, 24 saatten eski ise "süresi dolmuş" gösterimi
+  - Geri sayım rozeti (24h - elapsed)
 
-### 3. Satıcılara Alışveriş Erişimi
-- `src/components/AppSidebar.tsx` `vendorLinks`: `Market` ve `My Orders` linklerini ekle
-- ProductDetail'de "kendi ürününü satın alamazsın" kontrolü (vendor_id === user.id ise butonu disable)
+---
 
-### 4. Kategori Sistemi
-- `src/pages/VendorDashboard.tsx`: Form'a kategori `<select>` alanı ekle (Dijital Hesap, Yazılım, Servis, E-kitap, Diğer vb.)
-- Insert'e `category` field'ı ekle
-- Ürün listesinde kategori badge'i göster
-- `src/pages/Market.tsx`: Üstte kategori filtre çipleri ekle ("Tümü" + kategoriler)
+## 3. Ürün Mimarisi: Origin/Destination + Modal
 
-### 5. Admin Test Modu
-- `AppSidebar.tsx` `adminLinks`: `Market`, `My Orders`, `My Products (vendor)`, `Vendor Wallet` linklerini ekle
-- `App.tsx`: Admin'in `/vendor`, `/orders`, `/market`, `/vendor/wallet` sayfalarına erişebildiğinden emin ol (ProtectedRoute role kontrolünü gevşet)
-- `VendorDashboard.tsx` ve `Orders.tsx`: admin user_id'siyle de çalışabilsin
+### A. DB değişikliği
+- `products` tablosuna ekle:
+  - `origin` (text, nullable)
+  - `destination` (text, nullable)
+- Mevcut `category` alanını standart 3 kategoriye sınırla (UI'da select):
+  - "Dijital Veriler", "Lojistik Rotaları", "VIP Erişim"
 
-### 6. Customization Sayfası React Ref Uyarısı
-- `src/pages/Customization.tsx` `Section` bileşenine ref forward'lanıyor → `forwardRef` ile sar (console error'ı temizler)
+### B. UI değişiklikleri
+- **`VendorDashboard.tsx`** ürün ekleme formu:
+  - Kategori `<select>`'ini bu 3 seçenekle güncelle (mevcut serbest kategori sistemi varsa onu sınırla)
+  - "Origin" ve "Destination" input alanları ekle
+- **`Market.tsx`** ürün kartı:
+  - Origin → Destination göster: `📍 Istanbul → Berlin` formatında küçük etiket
+  - Kategori chip filtresi: 3 sabit kategori
+- **Yeni component: `src/components/ProductDescriptionModal.tsx`** — `Dialog`-tabanlı, koyu temayla uyumlu, açıklamayı modal içinde göster
+- **`Market.tsx`**: kart üzerinde "Detaylar" linki modalı açar (ürün sayfasına gitmeden hızlı önizleme); ana tıklama hala `/product/:id`'ye götürür
 
-## Dosyalar
-- Yeni migration: storage bucket'lar + RLS politikaları
-- `src/pages/Market.tsx` — satıcı join + kategori filtresi
-- `src/pages/ProductDetail.tsx` — satıcı kartı + own-product guard
-- `src/pages/VendorDashboard.tsx` — kategori alanı
-- `src/components/AppSidebar.tsx` — admin/vendor için ek linkler
-- `src/pages/Customization.tsx` — `forwardRef` düzeltmesi
-- `src/App.tsx` — gerekirse admin route erişimi
+---
+
+## 4. Kızılyürek AI Asistanı
+
+- **Yeni edge function: `supabase/functions/kizilyurek-chat/index.ts`**:
+  - Lovable AI Gateway (`google/gemini-3-flash-preview`) ile çalışır
+  - Sistem prompt: "Sen Kızılyürek, aeigsthub yeraltı marketinin operasyonel destek asistanısın. Kullanıcılara LTC ödemeleri, escrow sistemi, güvenlik protokolleri (2FA, PGP, oturum süresi), dispute süreci ve teslimat yöntemleri hakkında kısa, net ve operasyonel cevaplar ver. Türkçe konuş. Asla gerçek illegal aktiviteleri teşvik etme — sadece platform kullanımı hakkında bilgi ver."
+  - `verify_jwt = false` (chat herkese açık)
+  - Streaming response (mevcut SSE pattern)
+- **Yeni component: `src/components/KizilyurekAssistant.tsx`**:
+  - Sağ alt köşede sabit (`fixed bottom-4 right-4 z-40`) yuvarlak buton (Bot ikonu, kırmızı glow)
+  - Tıklayınca açılan chat paneli (320×480 popup)
+  - Hızlı sorular (chips): "LTC nasıl yatırılır?", "Güvenlik protokolleri", "Dispute nasıl açılır?", "Oturum süresi"
+  - Markdown render (`react-markdown` zaten yüklü değilse ekle)
+  - Streaming token-by-token
+- **Session warning entegrasyonu**:
+  - `KizilyurekAssistant`, `useSessionTimer()` context'i izler
+  - Kalan süre 5 dakikaya düşünce **otomatik** olarak chat'i açar ve sistem mesajı ekler:
+    > 🚨 İzlerini silmek için süren doluyor Operatör. Kalan süre: X:XX
+- **`PageShell.tsx`**: KizilyurekAssistant'ı tüm sayfalarda göster
+
+---
+
+## Dosya Değişiklikleri
+
+**Yeni dosyalar**:
+- `src/lib/sessionTimerContext.tsx`
+- `src/components/SessionTimerBadge.tsx`
+- `src/components/KizilyurekAssistant.tsx`
+- `src/components/ProductDescriptionModal.tsx`
+- `src/pages/Wallet.tsx`
+- `supabase/functions/kizilyurek-chat/index.ts`
+- 2 migration: `profiles.withdraw_pin_hash`, `products.origin`/`destination`
+
+**Düzenlenecekler**:
+- `src/lib/authContext.tsx` (signup: PIN hash + PGP key kaydet)
+- `src/pages/Login.tsx` (PIN, PGP, session timer seçimi)
+- `src/components/PageShell.tsx` (SessionTimerBadge + KizilyurekAssistant mount)
+- `src/components/AppSidebar.tsx` (Wallet linki tüm rollere)
+- `src/App.tsx` (SessionTimerProvider sarmalı, /wallet route)
+- `src/pages/VendorDashboard.tsx` (origin/destination + 3 sabit kategori)
+- `src/pages/Market.tsx` (origin→destination etiketi + sabit kategori chip'leri + hızlı modal)
+- `supabase/config.toml` (kizilyurek-chat function `verify_jwt = false`)
 
 ## Dokunulmayacaklar
-- Ödeme akışı, escrow, RPC fonksiyonları (zaten çalışıyor)
-- Mevcut RLS policy'leri (sadece storage için yeni eklenecek)
+- **Ödeme akışı, escrow, RPC fonksiyonları, mevcut RLS policy'leri** — hiçbiri değişmiyor
+- Mevcut MFA, anti-phishing kodu, vendor wallet sayfası
+
+## Onaylar
+- Yeni bağımlılık: `react-markdown` (Kızılyürek mesajlarını render için)
+- 2 migration onayı gerekecek (PIN hash kolonu + ürün origin/destination)
+
+---
+
+Onaylarsan hemen başlıyorum.
 
