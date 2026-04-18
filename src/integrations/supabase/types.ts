@@ -417,11 +417,13 @@ export type Database = {
           created_at: string
           delivery_data: string | null
           description: string | null
+          destination: string | null
           id: string
           image_emoji: string | null
           image_url: string | null
           is_active: boolean | null
           name: string | null
+          origin: string | null
           price: number
           stock: number | null
           title: string
@@ -436,11 +438,13 @@ export type Database = {
           created_at?: string
           delivery_data?: string | null
           description?: string | null
+          destination?: string | null
           id?: string
           image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
           name?: string | null
+          origin?: string | null
           price?: number
           stock?: number | null
           title: string
@@ -455,11 +459,13 @@ export type Database = {
           created_at?: string
           delivery_data?: string | null
           description?: string | null
+          destination?: string | null
           id?: string
           image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
           name?: string | null
+          origin?: string | null
           price?: number
           stock?: number | null
           title?: string
@@ -481,6 +487,7 @@ export type Database = {
           pgp_key: string | null
           updated_at: string
           user_id: string
+          withdraw_pin_hash: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -492,6 +499,7 @@ export type Database = {
           pgp_key?: string | null
           updated_at?: string
           user_id: string
+          withdraw_pin_hash?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -503,6 +511,7 @@ export type Database = {
           pgp_key?: string | null
           updated_at?: string
           user_id?: string
+          withdraw_pin_hash?: string | null
         }
         Relationships: []
       }
