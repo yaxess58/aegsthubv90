@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pinHash = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
       }
       const uid = data.session.user.id;
-      const update: Record<string, unknown> = {};
+      const update: { withdraw_pin_hash?: string; pgp_key?: string } = {};
       if (pinHash) update.withdraw_pin_hash = pinHash;
       if (pgpKey && pgpKey.trim()) update.pgp_key = pgpKey.trim();
       if (Object.keys(update).length) {
