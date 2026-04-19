@@ -21,8 +21,13 @@ const QUICK = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kizilyurek-chat`;
 
-export default function KizilyurekAssistant({ position = "bottom-right" }: { position?: "bottom-right" | "bottom-left" }) {
-  const [open, setOpen] = useState(false);
+export default function KizilyurekAssistant({ position = "bottom-right", open: openProp, onOpenChange, hideFab = false }: AssistantProps) {
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setOpenInternal(v);
+  };
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
