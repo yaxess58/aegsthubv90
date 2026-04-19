@@ -27,11 +27,11 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
-    const claims = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (claims.error || !claims.data?.claims) {
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const userId = claims.data.claims.sub;
+    const userId = userData.user.id;
 
     const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: order } = await service.from("orders").select("id, buyer_id, vendor_id, payment_address, amount, payment_status, confirmations").eq("id", order_id).maybeSingle();
