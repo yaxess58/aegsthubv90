@@ -14,7 +14,7 @@ const QUICK = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kizilyurek-chat`;
 
-export default function KizilyurekAssistant() {
+export default function KizilyurekAssistant({ position = "bottom-right" }: { position?: "bottom-right" | "bottom-left" }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -116,20 +116,23 @@ export default function KizilyurekAssistant() {
     }
   };
 
+  const cornerBtn = position === "bottom-left" ? "bottom-4 left-4" : "bottom-4 right-4";
+  const cornerPanel = position === "bottom-left" ? "bottom-4 left-4" : "bottom-4 right-4";
+
   return (
     <>
       {!open && (
         <button
           onClick={() => setOpen(true)}
           aria-label="Kızılyürek Operasyonel Destek"
-          className="fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-[0_0_20px_hsl(var(--destructive)/0.6)] hover:scale-105 transition-all"
+          className={`fixed ${cornerBtn} z-40 w-14 h-14 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-[0_0_20px_hsl(var(--destructive)/0.6)] hover:scale-105 transition-all`}
         >
           <Bot className="w-6 h-6" />
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-4 right-4 z-40 w-[340px] h-[480px] bg-card border border-destructive/60 rounded-lg shadow-[0_0_30px_hsl(var(--destructive)/0.4)] flex flex-col overflow-hidden">
+        <div className={`fixed ${cornerPanel} z-40 w-[340px] h-[480px] bg-card border border-destructive/60 rounded-lg shadow-[0_0_30px_hsl(var(--destructive)/0.4)] flex flex-col overflow-hidden`}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-destructive/10">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-destructive" />
