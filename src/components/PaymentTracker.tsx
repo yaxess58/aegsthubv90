@@ -93,8 +93,8 @@ export default function PaymentTracker({ orderId, amount }: Props) {
 
       {address && (
         <>
-          <div className="flex justify-center bg-white p-3 rounded">
-            <QRCodeSVG value={`litecoin:${address}?amount=${amount}`} size={140} />
+          <div className="flex justify-center bg-secondary p-3 rounded">
+            <QRCodeSVG value={`litecoin:${address}?amount=${amount}`} size={140} bgColor="transparent" fgColor="hsl(var(--foreground))" />
           </div>
 
           <div className="space-y-1">
