@@ -129,7 +129,9 @@ export default function KizilyurekAssistant({ position = "bottom-right", open: o
   };
 
   const cornerBtn = position === "bottom-left" ? "bottom-4 left-4" : "bottom-4 right-4";
-  const cornerPanel = position === "bottom-left" ? "bottom-4 left-4" : "bottom-4 right-4";
+  const cornerPanel = hideFab
+    ? (position === "bottom-left" ? "bottom-4 left-60" : "bottom-4 right-60")
+    : (position === "bottom-left" ? "bottom-4 left-4" : "bottom-4 right-4");
 
   return (
     <>
