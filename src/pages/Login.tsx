@@ -271,6 +271,8 @@ export default function Login() {
             )}
           </AnimatePresence>
 
+          <MathCaptcha onValidChange={setCaptchaOk} />
+
           <AnimatePresence>
             {error && (
               <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-destructive text-xs font-mono bg-destructive/10 rounded px-3 py-2">
@@ -284,7 +286,7 @@ export default function Login() {
             )}
           </AnimatePresence>
 
-          <motion.button type="submit" disabled={submitting} whileTap={{ scale: 0.98 }} className="w-full bg-primary text-primary-foreground py-3 rounded font-mono text-sm font-bold hover:opacity-90 transition-all neon-glow-btn disabled:opacity-50 flex items-center justify-center gap-2">
+          <motion.button type="submit" disabled={submitting || !captchaOk} whileTap={{ scale: 0.98 }} className="w-full bg-primary text-primary-foreground py-3 rounded font-mono text-sm font-bold hover:opacity-90 transition-all neon-glow-btn disabled:opacity-50 flex items-center justify-center gap-2">
             {submitting ? (<><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR...</>) : mode === "login" ? "GİRİŞ YAP" : "KAYIT OL"}
           </motion.button>
         </form>
