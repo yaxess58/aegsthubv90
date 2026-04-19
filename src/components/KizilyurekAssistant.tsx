@@ -133,7 +133,7 @@ export default function KizilyurekAssistant({ position = "bottom-right", open: o
 
   return (
     <>
-      {!open && (
+      {!open && !hideFab && (
         <button
           onClick={() => setOpen(true)}
           aria-label="Kızılyürek Operasyonel Destek"
