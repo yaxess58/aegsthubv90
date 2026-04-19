@@ -5,6 +5,13 @@ import { useSessionTimer } from "@/lib/sessionTimerContext";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
+type AssistantProps = {
+  position?: "bottom-right" | "bottom-left";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideFab?: boolean;
+};
+
 const QUICK = [
   "LTC nasıl yatırılır?",
   "Güvenlik protokolleri nelerdir?",
