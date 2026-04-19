@@ -90,6 +90,14 @@ export default function AppSidebar() {
             </button>
           );
         })}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("kizilyurek:toggle"))}
+          title={collapsed ? "Kızılyürek" : undefined}
+          className={`w-full mt-1 flex items-center gap-2 px-3 py-2 rounded text-sm transition-all text-destructive hover:bg-destructive/10 border border-destructive/30 ${collapsed ? "justify-center" : ""}`}
+        >
+          <Bot className="w-4 h-4 shrink-0" />
+          {!collapsed && "Kızılyürek"}
+        </button>
       </nav>
 
       <div className="p-3 border-t border-border">
