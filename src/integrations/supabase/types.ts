@@ -68,6 +68,41 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_room_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_system: boolean
+          room_id: string
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          room_id: string
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          room_id?: string
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "order_chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dead_drop_locations: {
         Row: {
           created_at: string
@@ -348,15 +383,50 @@ export type Database = {
         }
         Relationships: []
       }
+      order_chat_rooms: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          destroyed_at: string | null
+          id: string
+          order_id: string
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          destroyed_at?: string | null
+          id?: string
+          order_id: string
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          destroyed_at?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: number
           buyer_id: string
+          chat_destroyed_at: string | null
+          commission_amount: number | null
+          confirmations: number | null
           created_at: string
           delivery_confirmed: boolean | null
           delivery_method: string | null
           id: string
           notes: string | null
+          payment_address: string | null
+          payment_status: string | null
           product_id: string | null
           product_name: string | null
           service_fee: number | null
@@ -364,16 +434,22 @@ export type Database = {
           status: string | null
           txid: string | null
           updated_at: string
+          vendor_amount: number | null
           vendor_id: string
         }
         Insert: {
           amount?: number
           buyer_id: string
+          chat_destroyed_at?: string | null
+          commission_amount?: number | null
+          confirmations?: number | null
           created_at?: string
           delivery_confirmed?: boolean | null
           delivery_method?: string | null
           id?: string
           notes?: string | null
+          payment_address?: string | null
+          payment_status?: string | null
           product_id?: string | null
           product_name?: string | null
           service_fee?: number | null
@@ -381,16 +457,22 @@ export type Database = {
           status?: string | null
           txid?: string | null
           updated_at?: string
+          vendor_amount?: number | null
           vendor_id: string
         }
         Update: {
           amount?: number
           buyer_id?: string
+          chat_destroyed_at?: string | null
+          commission_amount?: number | null
+          confirmations?: number | null
           created_at?: string
           delivery_confirmed?: boolean | null
           delivery_method?: string | null
           id?: string
           notes?: string | null
+          payment_address?: string | null
+          payment_status?: string | null
           product_id?: string | null
           product_name?: string | null
           service_fee?: number | null
@@ -398,6 +480,7 @@ export type Database = {
           status?: string | null
           txid?: string | null
           updated_at?: string
+          vendor_amount?: number | null
           vendor_id?: string
         }
         Relationships: [
@@ -422,6 +505,7 @@ export type Database = {
           image_emoji: string | null
           image_url: string | null
           is_active: boolean | null
+          is_admin_product: boolean | null
           name: string | null
           origin: string | null
           price: number
@@ -443,6 +527,7 @@ export type Database = {
           image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
+          is_admin_product?: boolean | null
           name?: string | null
           origin?: string | null
           price?: number
@@ -464,6 +549,7 @@ export type Database = {
           image_emoji?: string | null
           image_url?: string | null
           is_active?: boolean | null
+          is_admin_product?: boolean | null
           name?: string | null
           origin?: string | null
           price?: number
@@ -621,6 +707,39 @@ export type Database = {
           },
         ]
       }
+      user_balances: {
+        Row: {
+          available: number
+          created_at: string
+          id: string
+          pending: number
+          total: number
+          updated_at: string
+          user_id: string
+          withdrawn: number
+        }
+        Insert: {
+          available?: number
+          created_at?: string
+          id?: string
+          pending?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          withdrawn?: number
+        }
+        Update: {
+          available?: number
+          created_at?: string
+          id?: string
+          pending?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          withdrawn?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -748,6 +867,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_commission_wallet: { Args: never; Returns: string }
       assign_admin_role_by_email: {
         Args: { _email: string }
         Returns: undefined
@@ -776,6 +896,11 @@ export type Database = {
         Args: { _ltc_address?: string; _order_id: string; _tx_hash?: string }
         Returns: undefined
       }
+      process_payment_confirmation: {
+        Args: { _confirmations: number; _order_id: string }
+        Returns: Json
+      }
+      purge_old_chat_rooms: { Args: never; Returns: undefined }
       release_escrow: {
         Args: { _escrow_id?: string; _order_id?: string }
         Returns: Json

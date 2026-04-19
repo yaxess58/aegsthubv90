@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/authContext";
 import { useSessionTimer } from "@/lib/sessionTimerContext";
 import { Shield, AlertTriangle, Loader2, Eye, EyeOff, Fingerprint, Lock, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import MathCaptcha from "@/components/MathCaptcha";
 
 type Mode = "login" | "signup";
 type Role = "vendor" | "buyer";
@@ -27,6 +28,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [antiPhishingCode, setAntiPhishingCode] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [captchaOk, setCaptchaOk] = useState(false);
   const [sessionMin, setSessionMin] = useState<number>(() => {
     const v = localStorage.getItem("session_duration_min");
     return v ? Number(v) : 60;
@@ -47,6 +49,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (!captchaOk) { setError("Önce bot doğrulamasını tamamla."); return; }
     setSubmitting(true);
 
     if (mode === "login") {
@@ -268,6 +271,8 @@ export default function Login() {
             )}
           </AnimatePresence>
 
+          <MathCaptcha onValidChange={setCaptchaOk} />
+
           <AnimatePresence>
             {error && (
               <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-destructive text-xs font-mono bg-destructive/10 rounded px-3 py-2">
@@ -281,7 +286,7 @@ export default function Login() {
             )}
           </AnimatePresence>
 
-          <motion.button type="submit" disabled={submitting} whileTap={{ scale: 0.98 }} className="w-full bg-primary text-primary-foreground py-3 rounded font-mono text-sm font-bold hover:opacity-90 transition-all neon-glow-btn disabled:opacity-50 flex items-center justify-center gap-2">
+          <motion.button type="submit" disabled={submitting || !captchaOk} whileTap={{ scale: 0.98 }} className="w-full bg-primary text-primary-foreground py-3 rounded font-mono text-sm font-bold hover:opacity-90 transition-all neon-glow-btn disabled:opacity-50 flex items-center justify-center gap-2">
             {submitting ? (<><Loader2 className="w-4 h-4 animate-spin" /> İŞLENİYOR...</>) : mode === "login" ? "GİRİŞ YAP" : "KAYIT OL"}
           </motion.button>
         </form>
