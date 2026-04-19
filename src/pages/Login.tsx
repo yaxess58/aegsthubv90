@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/authContext";
 import { useSessionTimer } from "@/lib/sessionTimerContext";
 import { Shield, AlertTriangle, Loader2, Eye, EyeOff, Fingerprint, Lock, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import MathCaptcha from "@/components/MathCaptcha";
 
 type Mode = "login" | "signup";
 type Role = "vendor" | "buyer";
@@ -27,6 +28,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [antiPhishingCode, setAntiPhishingCode] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [captchaOk, setCaptchaOk] = useState(false);
   const [sessionMin, setSessionMin] = useState<number>(() => {
     const v = localStorage.getItem("session_duration_min");
     return v ? Number(v) : 60;
@@ -47,6 +49,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (!captchaOk) { setError("Önce bot doğrulamasını tamamla."); return; }
     setSubmitting(true);
 
     if (mode === "login") {
