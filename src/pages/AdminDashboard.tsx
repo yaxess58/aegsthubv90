@@ -139,9 +139,25 @@ export default function AdminDashboard() {
     toast.success("Otomatik çekim yapılandırıldı!");
   };
 
+  const executeWithdraw = async () => {
+    const amt = parseFloat(withdrawAmount);
+    if (!amt || amt <= 0) { toast.error("Geçerli bir miktar gir"); return; }
+    setWithdrawing(true);
+    const { data, error } = await supabase.rpc("admin_withdraw_commission" as any, { _amount: amt });
+    setWithdrawing(false);
+    if (error) { toast.error(error.message); return; }
+    const res = data as { success: boolean; error?: string; cold_wallet?: string };
+    if (!res?.success) { toast.error(res?.error || "Hata"); return; }
+    toast.success(`${amt} LTC → ${res.cold_wallet} için çekim işaretlendi`);
+    setWithdrawAmount("");
+    loadAll();
+  };
+
   const statCards = [
+    { label: "24s Hacim", value: `${stats.volume24h} LTC`, icon: Activity, color: "text-primary" },
+    { label: "Komisyon Bakiyem", value: `${stats.adminBalance} LTC`, icon: Wallet, color: "text-green-500" },
+    { label: "Bekleyen Ödeme", value: stats.pendingPayments, icon: Clock, color: "text-yellow-500" },
     { label: "Toplam Hacim", value: `${stats.totalVolume} LTC`, icon: TrendingUp, color: "text-foreground" },
-    { label: "Komisyon Geliri", value: `${stats.totalCommissions} LTC`, icon: Wallet, color: "text-green-500" },
     { label: "Escrow Havuzu", value: `${stats.heldEscrow} LTC`, icon: Shield, color: "text-yellow-500" },
     { label: "Aktif Dispute", value: stats.activeDisputes, icon: AlertTriangle, color: "text-primary" },
     { label: "Satıcı Sayısı", value: stats.totalVendors, icon: Users, color: "text-foreground" },
