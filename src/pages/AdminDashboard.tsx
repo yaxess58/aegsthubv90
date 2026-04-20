@@ -245,7 +245,61 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* PANIC BUTTON */}
+      {/* Commission Withdraw + Audit Log */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="glass-card rounded-lg p-4">
+          <h2 className="text-sm font-mono font-bold text-foreground mb-2 flex items-center gap-2">
+            <Send className="w-4 h-4 text-green-500" /> Komisyon Çekim
+          </h2>
+          <div className="text-[10px] text-muted-foreground font-mono mb-3 break-all">
+            Hedef: <span className="text-primary">LiTaNf78XeFcLiZ1HJ9HWtsUFBajnb99YT</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground font-mono mb-2">
+            Çekilebilir: <span className="text-green-500 font-bold">{stats.adminBalance} LTC</span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              placeholder="Miktar (LTC)"
+              type="number"
+              step="0.01"
+              className="flex-1 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <button
+              onClick={executeWithdraw}
+              disabled={withdrawing}
+              className="px-3 py-2 bg-green-600/20 text-green-500 text-[10px] font-mono rounded hover:bg-green-600/30 disabled:opacity-50"
+            >
+              {withdrawing ? "…" : "Çek"}
+            </button>
+          </div>
+          <div className="text-[9px] text-muted-foreground font-mono mt-2">
+            Manuel transfer sonrası bakiye düşer ve audit log oluşur.
+          </div>
+        </div>
+
+        <div className="glass-card rounded-lg p-4">
+          <h2 className="text-sm font-mono font-bold text-foreground mb-3 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-primary" /> Son Denetim Olayları
+          </h2>
+          {auditLogs.length === 0 ? (
+            <div className="text-xs text-muted-foreground font-mono text-center py-4">Kayıt yok.</div>
+          ) : (
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {auditLogs.map((log) => (
+                <div key={log.id} className="text-[10px] font-mono bg-secondary rounded p-2 flex justify-between items-center">
+                  <span className="text-foreground truncate">{log.action}</span>
+                  <span className="text-muted-foreground shrink-0 ml-2">
+                    {new Date(log.created_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="glass-card rounded-lg p-4 border border-destructive/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
