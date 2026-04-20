@@ -3,7 +3,7 @@ import PageShell from "@/components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, AlertTriangle, Users, ShoppingCart, Skull, Wallet, Shield, Zap } from "lucide-react";
+import { TrendingUp, AlertTriangle, Users, ShoppingCart, Skull, Wallet, Shield, Zap, Activity, Send, FileText, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -14,17 +14,31 @@ interface Stats {
   totalOrders: number;
   totalCommissions: number;
   heldEscrow: number;
+  volume24h: number;
+  pendingPayments: number;
+  adminBalance: number;
+}
+
+interface AuditRow {
+  id: string;
+  action: string;
+  target_type: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
 }
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<Stats>({ totalVolume: 0, activeDisputes: 0, totalVendors: 0, totalOrders: 0, totalCommissions: 0, heldEscrow: 0 });
+  const [stats, setStats] = useState<Stats>({ totalVolume: 0, activeDisputes: 0, totalVendors: 0, totalOrders: 0, totalCommissions: 0, heldEscrow: 0, volume24h: 0, pendingPayments: 0, adminBalance: 0 });
   const [weekData, setWeekData] = useState<{ name: string; ltc: number }[]>([]);
   const [escrows, setEscrows] = useState<any[]>([]);
   const [panicConfirm, setPanicConfirm] = useState(false);
   const [autoWithdraw, setAutoWithdraw] = useState<any>(null);
   const [coldWallet, setColdWallet] = useState("");
   const [minAmount, setMinAmount] = useState("1.0");
+  const [auditLogs, setAuditLogs] = useState<AuditRow[]>([]);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const loadAll = async () => {
     if (!user) return;
