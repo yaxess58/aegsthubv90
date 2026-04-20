@@ -35,6 +35,21 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
+    // Rate limit: 5 address generations per 60 seconds per user
+    const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: rl } = await service.rpc("check_rate_limit", {
+      _identifier: userId,
+      _action: "create_payment_address",
+      _max_count: 5,
+      _window_seconds: 60,
+    });
+    if (rl && (rl as any).allowed === false) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded", retry_after: (rl as any).retry_after_seconds }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Verify order belongs to this buyer
     const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: order, error: orderErr } = await service.from("orders").select("id, buyer_id, payment_address").eq("id", order_id).maybeSingle();
