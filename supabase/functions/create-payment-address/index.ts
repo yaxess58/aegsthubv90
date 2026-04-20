@@ -51,7 +51,6 @@ Deno.serve(async (req) => {
     }
 
     // Verify order belongs to this buyer
-    const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: order, error: orderErr } = await service.from("orders").select("id, buyer_id, payment_address").eq("id", order_id).maybeSingle();
     if (orderErr || !order) {
       return new Response(JSON.stringify({ error: "Order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
