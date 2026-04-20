@@ -26,48 +26,64 @@ export default function AdminDashboard() {
   const [coldWallet, setColdWallet] = useState("");
   const [minAmount, setMinAmount] = useState("1.0");
 
+  const loadAll = async () => {
+    if (!user) return;
+    const now = Date.now();
+    const since24h = new Date(now - 24 * 3600 * 1000).toISOString();
+    const [ordersRes, disputesRes, vendorsRes, escrowRes, withdrawRes, volume24hRes, pendingRes, balanceRes, auditRes] = await Promise.all([
+      supabase.from("orders").select("amount, created_at"),
+      supabase.from("disputes").select("id, status"),
+      supabase.from("user_roles").select("id").eq("role", "vendor"),
+      supabase.from("escrow_pool").select("*").eq("status", "held"),
+      supabase.from("admin_auto_withdraw").select("*").limit(1),
+      supabase.from("orders").select("amount").gte("created_at", since24h),
+      supabase.from("orders").select("id").eq("payment_status", "awaiting_payment"),
+      supabase.from("user_balances").select("available").eq("user_id", user.id).maybeSingle(),
+      (supabase as any).from("audit_logs").select("id, action, target_type, metadata, created_at").order("created_at", { ascending: false }).limit(12),
+    ]);
+
+    const orders = ordersRes.data || [];
+    const disputes = disputesRes.data || [];
+    const vendors = vendorsRes.data || [];
+    const held = escrowRes.data || [];
+
+    setEscrows(held);
+    if (withdrawRes.data?.[0]) setAutoWithdraw(withdrawRes.data[0]);
+    if (auditRes.data) setAuditLogs(auditRes.data as AuditRow[]);
+
+    const totalVolume = orders.reduce((s, o) => s + Number(o.amount), 0);
+    const totalCommissions = held.reduce((s, e) => s + Number(e.commission), 0);
+    const heldEscrow = held.reduce((s, e) => s + Number(e.amount), 0);
+    const volume24h = (volume24hRes.data || []).reduce((s, o) => s + Number(o.amount), 0);
+
+    setStats({
+      totalVolume: Math.round(totalVolume * 100) / 100,
+      activeDisputes: disputes.filter((d) => d.status === "open" || d.status === "escalated").length,
+      totalVendors: vendors.length,
+      totalOrders: orders.length,
+      totalCommissions: Math.round(totalCommissions * 100) / 100,
+      heldEscrow: Math.round(heldEscrow * 100) / 100,
+      volume24h: Math.round(volume24h * 100) / 100,
+      pendingPayments: pendingRes.data?.length || 0,
+      adminBalance: Math.round(Number(balanceRes.data?.available || 0) * 100) / 100,
+    });
+
+    const weekLabels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+    const grouped = weekLabels.map((name) => ({ name, ltc: 0 }));
+    orders.forEach((o) => {
+      const day = new Date(o.created_at).getDay();
+      const idx = day === 0 ? 6 : day - 1;
+      grouped[idx].ltc += Number(o.amount);
+    });
+    setWeekData(grouped);
+  };
+
   useEffect(() => {
-    const fetchAll = async () => {
-      const [ordersRes, disputesRes, vendorsRes, escrowRes, withdrawRes] = await Promise.all([
-        supabase.from("orders").select("amount, created_at"),
-        supabase.from("disputes").select("id, status"),
-        supabase.from("user_roles").select("id").eq("role", "vendor"),
-        supabase.from("escrow_pool").select("*").eq("status", "held"),
-        supabase.from("admin_auto_withdraw").select("*").limit(1),
-      ]);
-
-      const orders = ordersRes.data || [];
-      const disputes = disputesRes.data || [];
-      const vendors = vendorsRes.data || [];
-      const held = escrowRes.data || [];
-
-      setEscrows(held);
-      if (withdrawRes.data?.[0]) setAutoWithdraw(withdrawRes.data[0]);
-
-      const totalVolume = orders.reduce((s, o) => s + Number(o.amount), 0);
-      const totalCommissions = held.reduce((s, e) => s + Number(e.commission), 0);
-      const heldEscrow = held.reduce((s, e) => s + Number(e.amount), 0);
-
-      setStats({
-        totalVolume: Math.round(totalVolume * 100) / 100,
-        activeDisputes: disputes.filter((d) => d.status === "open" || d.status === "escalated").length,
-        totalVendors: vendors.length,
-        totalOrders: orders.length,
-        totalCommissions: Math.round(totalCommissions * 100) / 100,
-        heldEscrow: Math.round(heldEscrow * 100) / 100,
-      });
-
-      const weekLabels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-      const grouped = weekLabels.map((name) => ({ name, ltc: 0 }));
-      orders.forEach((o) => {
-        const day = new Date(o.created_at).getDay();
-        const idx = day === 0 ? 6 : day - 1;
-        grouped[idx].ltc += Number(o.amount);
-      });
-      setWeekData(grouped);
-    };
-    fetchAll();
-  }, []);
+    loadAll();
+    const interval = setInterval(loadAll, 30000); // live refresh every 30s
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const releaseEscrow = async (escrowId: string) => {
     const { data } = await supabase.rpc("release_escrow" as any, { _escrow_id: escrowId });
