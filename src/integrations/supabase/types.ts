@@ -68,6 +68,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       chat_room_messages: {
         Row: {
           content: string
@@ -601,6 +631,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          id: string
+          identifier: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          id?: string
+          identifier: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          id?: string
+          identifier?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       security_logs: {
         Row: {
           created_at: string
@@ -868,11 +922,21 @@ export type Database = {
     }
     Functions: {
       admin_commission_wallet: { Args: never; Returns: string }
+      admin_withdraw_commission: { Args: { _amount: number }; Returns: Json }
       assign_admin_role_by_email: {
         Args: { _email: string }
         Returns: undefined
       }
       assign_role_on_signup: { Args: { _role: string }; Returns: undefined }
+      check_rate_limit: {
+        Args: {
+          _action: string
+          _identifier: string
+          _max_count?: number
+          _window_seconds?: number
+        }
+        Returns: Json
+      }
       confirm_delivery: { Args: { _order_id: string }; Returns: undefined }
       create_admin_user: { Args: never; Returns: undefined }
       generate_payment_address: { Args: { _order_id: string }; Returns: string }
@@ -891,7 +955,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _target_id?: string
+          _target_type?: string
+        }
+        Returns: undefined
+      }
       panic_destroy: { Args: never; Returns: Json }
+      panic_wipe_user: { Args: never; Returns: Json }
       process_order_payment: {
         Args: { _ltc_address?: string; _order_id: string; _tx_hash?: string }
         Returns: undefined

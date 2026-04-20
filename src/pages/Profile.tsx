@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/authContext";
 import { Camera, Save, User, Package, CheckCircle, Clock, Loader2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import PanicButton from "@/components/PanicButton";
 
 interface ProfileData {
   display_name: string | null;
@@ -223,6 +224,9 @@ export default function Profile() {
             💡 Profil fotoğrafı ve banner için <span className="text-primary">GIF, PNG, JPG, WebP</span> formatları desteklenir. Hareketli GIF'ler otomatik olarak oynatılır!
           </span>
         </div>
+
+        {/* Panic Mode */}
+        <PanicButton />
 
         {/* Order History for Buyers */}
         {role === "buyer" && (
